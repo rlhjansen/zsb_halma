@@ -1,3 +1,9 @@
+
+import class_independent_functions.py as cif
+
+
+
+
 class Player:
     # number and goal are integers like:
     # 0, 1, 2, 3 these represent starting corners as in start_positions.png
@@ -84,7 +90,7 @@ class Board:
     def __init__(self, players, size):
         self.board = [['.' for _ in range(size)] for _ in range(size)]
         self.players = [Player(player, size-1) for player in range(players)]
-        self.direction_list = make_direction_list()
+        self.direction_list = self.make_direction_list()
         for player in self.players:
             for [x,y] in player.get_piece_coords():
                 self.board[x][y] = player.get_color()
@@ -108,7 +114,7 @@ class Board:
 
 
     def make_move(self, movestring):
-        [[x_start, y_start], [x_end, y_end]] = to_coordinates(movestring)
+        [[x_start, y_start], [x_end, y_end]] = cif.to_coordinates(movestring)
         moving_player = self.board.get_player(x_start,y_start)
         moving_player.move(x_start, y_start, x_end, y_end)
         self.board[x_start][y_start] = '.'
@@ -128,11 +134,29 @@ class Board:
             moves_list_piece.extend(self.scan(piece, dx, dy))
         return moves_list_piece
 
-
-    def scan(self, piece, dx, dy):
+###############################################################################
+    def scan(self, piece, dx, dy, only_jumps=False):
+        moves_list = []
         [x, y] = piece
         new_x = x+dx
         new_y = y+dy
+        while 0 <= new_x <= self.size and 0 <= new_y <= self.size:
+            piece_on_coord = self.board[x][y]
+            if piece_on_coord != '.':
+                [jump_x, jump_y] = cif.get_jump_loc(x, y, new_x, new_y)
+                if self.check_jump(x, y, new_x, new_y):
+                    moves_list.append([jump_x, jump_y])
+                    new_piece = [jump_x, jump_y]
+                    for [new_dx, new_dy] in self.direction_list:
+                        moves_list.extend(self.scan(new_piece, new_dx, new_dy, only_jumps=True))
+                break
+        if not only_jumps:
+            if self.check_free(x+dx, y+dy):
+                moves_list.append([x+dx, y+dy])
+            real_moves = [[[x, y], end_loc] for end_loc in moves_list]
+        else:
+            real_moves = moves_list
+        return real_moves
 
 
 
@@ -147,6 +171,3 @@ class Board:
             return self.players[3]
 
 
-def to_coordinates(movestring):
-
-    pass
