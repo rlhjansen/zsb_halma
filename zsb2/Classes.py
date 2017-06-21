@@ -104,7 +104,8 @@ class Board:
     # players = number of players
     # size is boardsize, atleast greaters than 8
     # rows = diagonal rows of pawns
-    def __init__(self, players, size, rows):
+    # playertypes = list of playertipes i.e. ['h'
+    def __init__(self, players, size, rows, playertypes):
         self.board = [['.' for _ in range(size)] for _ in range(size)]
         self.players = [Player(player, size-1, rows) for player in range(players)]
         self.size = size - 1
@@ -113,6 +114,16 @@ class Board:
         for player in self.players:
             for [x,y] in player.get_pieces():
                 self.board[x][y] = player.get_color()
+
+    def init_players(self, players):
+        self.players = []
+        for player_type in players:
+            if player_type == 'h':
+                self.players.append(Player(player, size -1, rows))
+            elif player_type == 'mc':
+                self.players.append(MCPlayer(player, size -1, rows))
+            elif player_type == 'ab':
+                self.players.append(AlfaBètaPlayer(player))
 
     # returns the score for a player for the current board
     def get_score(self, player):
@@ -131,7 +142,8 @@ class Board:
         for i in range(number_of_players):
             player_dict[colorlist[i]] = self.players[i]
 
-    # return
+    # returns a list with x,y direction combinations that are allowed to explore
+    # in
     def make_direction_list(self):
         dir_list = []
         for dx in [-1, 0, 1]:
@@ -140,7 +152,7 @@ class Board:
         del dir_list[4]
         return dir_list
 
-
+    # make an actual move on the board
     def make_move(self, movestring):
         [[x_start, y_start], [x_end, y_end]] = cif.to_coordinates(movestring)
         moving_player = self.board.get_player(x_start,y_start)
@@ -149,30 +161,35 @@ class Board:
         self.board[x_end][y_end] = moving_player
         self.make_move_for_player(moving_player, x_start, y_start, x_end, y_end)
 
-
+    # makes sure that the player.pieces are congruent with the pieces on the board
     def make_move_for_player(self, moving_player, x_start, y_start, x_end, y_end):
         player = player_string_to_player(moving_player)
         player.move_piece(x_start, y_start, x_end, y_end)
 
 
+    # returns a player object for a string input color
     def player_string_to_player(self, string):
         return self.color_player_dict[string]
 
 
+    # returns a list of legal moves that a player can make
     def get_moves_player(self, player):
         moves_list = []
         for piece in self.players[player-1].get_pieces():
             moves_list.extend(self.get_moves_piece(piece))
         return moves_list
 
-
+    # returns a list of moves that a piece can make
     def get_moves_piece(self, piece):
         moves_list_piece = []
         for [dx, dy] in self.direction_list:
             moves_list_piece.extend(self.scan(piece, dx, dy))
         return moves_list_piece
 
-
+    # returns a list of possible moves when exploring a certain direction
+    # only_jumps=True is used when there is a gamepiece in the explored
+    # direction that can be jumped over, in that case all possible further jumps
+    # are evaluated, return format = [[start_x, start_y], [end_x, end_y]]
     def scan(self, piece, dx, dy, only_jumps=False):
         moves_list = []
         [x, y] = piece
@@ -202,42 +219,37 @@ class Board:
             real_moves = moves_list
         return real_moves
 
-
+    # checks if a position on the board is unoccupied
     def check_free(self, x, y):
         if self.board[x][y] == '.':
             return True
         else:
             return False
 
+    # checks if a position can be jumped toward, with encountering blocking
+    # pieces
     def check_jump(self, x, y, land_x, land_y, dx, dy):
-        stones_count = 0
         new_x = x
         new_y = y
         while new_x != land_x and new_y != land_y:
             new_x = x+dx
             new_y = y+dy
-            if self.board[x][y] != '.':
+            if self.board[new_x][new_y] != '.':
                 return False
         return True
 
-
+    # return the corresponding player of a piece on position x,y
     def get_player(self, x, y):
-        if self.board[x][y] == 'r':
-            return self.players[0]
-        elif self.board[x][y] == 'b':
-            return self.players[1]
-        elif self.board[x][y] == 'g':
-            return self.players[2]
-        elif self.board[x][y] == 'y':
-            return self.players[3]
+        return self.color_player_dict[self.board[x][y]]
 
+    # prints the current board
     def print_board(self):
         for row in self.board:
             print(row)
 
     # returns a copy of the board
     def get_board(self):
-        new_board = im.deepcopy(self)
+        new_board = self
         return new_board
 
     # checks if a position [x,y] is on the board
