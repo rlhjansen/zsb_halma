@@ -12,6 +12,23 @@ class Player:
         self.color = self.set_color(number)
         self.pieces = self.get_start_locations(number, size, rows)
         self.goal = self.goal_location(number, size)
+        self.goal_manhattan = self.calc_goal_manhattan(rows)
+
+    # checks
+    def calc_goal_manhattan(self, rows):
+        goal_manhattan = 0
+        for i in range(rows):
+            for _ in range(i+1):
+                goal_manhattan += i
+        return goal_manhattan
+
+    # checks if the player wins
+    def player_wins(self):
+        if self.get_total_manhattan() == self.goal_manhattan:
+            return True
+        else:
+            return False
+
 
     # returns a player's goal location, the opposite side of the board
     def goal_location(self, number, size):
@@ -117,21 +134,26 @@ class Board:
 
     def init_players(self, players):
         self.players = []
-        for player_type in players:
-            if player_type == 'h':
-                self.players.append(Player(player, size -1, rows))
-            elif player_type == 'mc':
-                self.players.append(MCPlayer(player, size -1, rows))
-            elif player_type == 'ab':
-                self.players.append(AlfaBètaPlayer(player))
+        for i in range(len(players)):
+            if players[i] == 'h':
+                self.players.append(Player(i, size - 1, rows))
+            elif players[i] == 'mc':
+                self.players.append(MCPlayer(i, size - 1, rows))
+            elif players[i] == 'ab':
+                self.players.append(AlfaBètaPlayer(i, size - 1, rows))
 
     # returns the score for a player for the current board
+    # 200 here is supposed to drive the player to a win.
     def get_score(self, player):
         score = 0
         score += self.players[player].get_total_manhattan()
+        if self.players[player].player_wins():
+            score -= 200
         for other_player in self.players:
             if self.players[player] != other_player:
                 score -= other_player.get_total_manhattan()
+                if other_player.player_wins():
+                    score += 200
         return score
 
 
