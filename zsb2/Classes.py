@@ -1,7 +1,6 @@
 
-import class_independent_functions.py as cif
-
-
+import imports as im
+import class_independent_functions as cif
 
 
 class Player:
@@ -12,16 +11,16 @@ class Player:
     def __init__(self, number, size, rows):
         self.color = self.set_color(number)
         self.pieces = self.get_start_locations(number, size, rows)
-        self.goal = self.end_loc(number, size)
+        self.goal = self.end_location(number, size)
 
     def end_location(self, number, size):
         if number == 0:
             return [size, size]
-        if number == 1:
-            return [0, size]
         if number == 2:
-            return [size, 0]
+            return [0, size]
         if number == 3:
+            return [size, 0]
+        if number == 1:
             return [0,0]
 
     def get_total_manhattan(self):
@@ -46,19 +45,19 @@ class Player:
                 for y in range(rows):
                     if x+y < rows:
                         pieces.append([x,y])
-        elif number == 1:
+        elif number == 2:
             x_range = [size-x for x in range(rows)]
             for x in x_range:
                 for y in range(rows):
                     if size-rows < x-y:
                         pieces.append([x,y])
-        elif number == 2:
+        elif number == 3:
             y_range = [size-y for y in range(rows)]
             for x in range(rows):
                 for y in y_range:
                     if size-rows < y-x:
                         pieces.append([x,y])
-        elif number == 3:
+        elif number == 1:
             x_range = [size-x for x in range(rows)]
             y_range = [size-y for y in range(rows)]
             for x in x_range:
@@ -82,17 +81,21 @@ class Player:
         elif number == 3:
             return 'y'
 
+    def get_color(self):
+        return self.color
+
 
 
 class Board:
     # players = number of players
     # size is boardsize, atleast greaters than 8
-    def __init__(self, players, size):
+    # rows = diagonal rows of pawns
+    def __init__(self, players, size, rows):
         self.board = [['.' for _ in range(size)] for _ in range(size)]
-        self.players = [Player(player, size-1) for player in range(players)]
+        self.players = [Player(player, size-1, rows) for player in range(players)]
         self.direction_list = self.make_direction_list()
         for player in self.players:
-            for [x,y] in player.get_piece_coords():
+            for [x,y] in player.get_pieces():
                 self.board[x][y] = player.get_color()
 
     def get_score(self, player):
@@ -123,7 +126,7 @@ class Board:
 
     def get_moves_player(self, player):
         moves_list = []
-        for piece in player.get_pieces()
+        for piece in player.get_pieces():
             moves_list.extend(self.get_moves_piece(piece))
         return moves_list
 
@@ -143,12 +146,12 @@ class Board:
         while 0 <= new_x <= self.size and 0 <= new_y <= self.size:
             piece_on_coord = self.board[x][y]
             if piece_on_coord != '.':
-                [jump_x, jump_y] = cif.get_jump_loc(x, y, new_x, new_y)
-                if self.check_jump(x, y, new_x, new_y):
+                [jump_x, jump_y] = cif.get_jump_loc(x, y, new_x, new_y, dx, dy)
+                if self.check_jump(new_x, new_y, jump_x, jump_y):
                     moves_list.append([jump_x, jump_y])
                     new_piece = [jump_x, jump_y]
                     for [new_dx, new_dy] in self.direction_list:
-                        moves_list.extend(self.scan(new_piece, new_dx, new_dy, only_jumps=True))
+                        moves_list.append(self.scan(new_piece, new_dx, new_dy, only_jumps=True))
                 break
         if not only_jumps:
             if self.check_free(x+dx, y+dy):
@@ -158,6 +161,23 @@ class Board:
             real_moves = moves_list
         return real_moves
 
+
+    def check_free(self, x, y):
+        if self.board[x][y] == '.':
+            return True
+        else:
+            return False
+
+    def check_jump(self, x, y, land_x, land_y, dx, dy):
+        stones_count = 0
+        new_x = x
+        new_y = y
+        while new_x != land_x and new_y != land_y:
+            new_x = x+dx
+            new_y = y+dy
+            if self.board[x][y] != '.':
+                return False
+        return True
 
 
     def get_player(self, x, y):
@@ -170,4 +190,16 @@ class Board:
         elif self.board[x][y] == 'y':
             return self.players[3]
 
+    def print_board(self):
+        for row in self.board:
+            print(row)
+
+    def get_board(self):
+        new_board = im.deepcopy(self.board)
+        return new_board
+
+
+
+halma_board = Board(2, 9, 4)
+halma_board.print_board()
 
