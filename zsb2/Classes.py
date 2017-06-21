@@ -11,9 +11,10 @@ class Player:
     def __init__(self, number, size, rows):
         self.color = self.set_color(number)
         self.pieces = self.get_start_locations(number, size, rows)
-        self.goal = self.end_location(number, size)
+        self.goal = self.goal_location(number, size)
 
-    def end_location(self, number, size):
+    # returns a player's goal location, the opposite side of the board
+    def goal_location(self, number, size):
         if number == 0:
             return [size, size]
         if number == 2:
@@ -23,12 +24,17 @@ class Player:
         if number == 1:
             return [0,0]
 
+    # returns the sum of all manhattan distances of a players pieces to his
+    # goal location - the opposite corner -
     def get_total_manhattan(self):
         total_manhattan = 0
         for piece in self.get_pieces():
             total_manhattan += self.calculate_manhattan(piece)
+        return total_manhattan
 
 
+    # returns the manhattan distance from a piece to the goal location
+    # of that player - the opposite corner -
     def calculate_manhattan(self, piece):
         [x,y] = piece
         manhattan = 0
@@ -36,8 +42,15 @@ class Player:
         manhattan += abs(self.goal[1] - y)
         return manhattan
 
+    # moves the piece in the player's piecelist
+    def move_piece(self, x_start, y_start, x_end, y_end):
+        for i in range(len(self.pieces)):
+            [x, y] = self.pieces[i]
+            if x == x_start and y == y_start:
+                self.pieces[i] = [x_start, y_start]
+            break
 
-
+    # returns starting locations for a player
     def get_start_locations(self, number, size, rows):
         pieces = []
         if number == 0:
@@ -66,11 +79,11 @@ class Player:
                         pieces.append([x,y])
         return pieces
 
-
+    # returns the current piece locations for a player
     def get_pieces(self):
         return self.pieces
 
-
+    # assigns a color to the player
     def set_color(self, number):
         if number == 0:
             return 'r'
@@ -81,6 +94,7 @@ class Player:
         elif number == 3:
             return 'y'
 
+    # returns the color of a player
     def get_color(self):
         return self.color
 
@@ -93,20 +107,31 @@ class Board:
     def __init__(self, players, size, rows):
         self.board = [['.' for _ in range(size)] for _ in range(size)]
         self.players = [Player(player, size-1, rows) for player in range(players)]
-        self.direction_list = self.make_direction_list()
+        self.size = size - 1
+        self.direction_list = self.make_direction_list(players)
+        self.color_player_dict = self.make_player_dictionary(players)
         for player in self.players:
             for [x,y] in player.get_pieces():
                 self.board[x][y] = player.get_color()
 
+    # returns the score for a player for the current board
     def get_score(self, player):
         score = 0
-        score += player.get_total_manhattan()
+        score += self.players[player].get_total_manhattan()
         for other_player in self.players:
-            if player != other_player:
+            if self.players[player] != other_player:
                 score -= other_player.get_total_manhattan()
         return score
 
 
+    # returns a dictionary that returns a player object, with color input
+    def make_player_dictionary(self, number_of_players):
+        colorlist = ['r', 'b', 'g', 'y']
+        player_dict = {}
+        for i in range(number_of_players):
+            player_dict[colorlist[i]] = self.players[i]
+
+    # return
     def make_direction_list(self):
         dir_list = []
         for dx in [-1, 0, 1]:
@@ -122,11 +147,21 @@ class Board:
         moving_player.move(x_start, y_start, x_end, y_end)
         self.board[x_start][y_start] = '.'
         self.board[x_end][y_end] = moving_player
+        self.make_move_for_player(moving_player, x_start, y_start, x_end, y_end)
+
+
+    def make_move_for_player(self, moving_player, x_start, y_start, x_end, y_end):
+        player = player_string_to_player(moving_player)
+        player.move_piece(x_start, y_start, x_end, y_end)
+
+
+    def player_string_to_player(self, string):
+        return self.color_player_dict[string]
 
 
     def get_moves_player(self, player):
         moves_list = []
-        for piece in player.get_pieces():
+        for piece in self.players[player-1].get_pieces():
             moves_list.extend(self.get_moves_piece(piece))
         return moves_list
 
@@ -137,7 +172,7 @@ class Board:
             moves_list_piece.extend(self.scan(piece, dx, dy))
         return moves_list_piece
 
-###############################################################################
+
     def scan(self, piece, dx, dy, only_jumps=False):
         moves_list = []
         [x, y] = piece
@@ -146,15 +181,21 @@ class Board:
         while 0 <= new_x <= self.size and 0 <= new_y <= self.size:
             piece_on_coord = self.board[x][y]
             if piece_on_coord != '.':
-                [jump_x, jump_y] = cif.get_jump_loc(x, y, new_x, new_y, dx, dy)
-                if self.check_jump(new_x, new_y, jump_x, jump_y):
+                [jump_x, jump_y] = cif.get_jump_loc(x, y, new_x, new_y)
+                if self.check_jump(new_x, new_y, jump_x, jump_y, dx, dy) and \
+                        self.check_free(jump_x, jump_y) and \
+                        self.on_board(jump_x, jump_y):
                     moves_list.append([jump_x, jump_y])
                     new_piece = [jump_x, jump_y]
                     for [new_dx, new_dy] in self.direction_list:
-                        moves_list.append(self.scan(new_piece, new_dx, new_dy, only_jumps=True))
+                        temp_move = self.scan(new_piece, new_dx, new_dy, only_jumps=True)
+                        if temp_move != []:
+                            moves_list.append(self.scan(new_piece, new_dx, new_dy, only_jumps=True))
                 break
+            new_x += dx
+            new_y += dy
         if not only_jumps:
-            if self.check_free(x+dx, y+dy):
+            if self.check_free(x+dx, y+dy) and self.on_board(x+dx, y+dy):
                 moves_list.append([x+dx, y+dy])
             real_moves = [[[x, y], end_loc] for end_loc in moves_list]
         else:
@@ -194,12 +235,19 @@ class Board:
         for row in self.board:
             print(row)
 
+    # returns a copy of the board
     def get_board(self):
-        new_board = im.deepcopy(self.board)
+        new_board = im.deepcopy(self)
         return new_board
 
+    # checks if a position [x,y] is on the board
+    def on_board(self, x, y):
+        if 0 <= x <= self.size and 0 <= y <= self.size:
+            return True
+        else:
+            return False
 
 
 halma_board = Board(2, 9, 4)
-halma_board.print_board()
-
+print(halma_board)
+print(halma_board.get_board())

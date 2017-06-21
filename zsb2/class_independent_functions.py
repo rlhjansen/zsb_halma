@@ -1,3 +1,8 @@
+def to_coordinates(movestring):
+    startpoints = []
+    for i in range(len(movestring)):
+        if ord(movestring[i]) > 64:
+            startpoints.append(i)
 
 
 
