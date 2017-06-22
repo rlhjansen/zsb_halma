@@ -64,7 +64,7 @@ class Player:
         for i in range(len(self.pieces)):
             [x, y] = self.pieces[i]
             if x == x_start and y == y_start:
-                self.pieces[i] = [x_start, y_start]
+                self.pieces[i] = [x_end, y_end]
             break
 
     # returns starting locations for a player
