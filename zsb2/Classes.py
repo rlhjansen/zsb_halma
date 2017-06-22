@@ -418,7 +418,7 @@ def store(name='Database'):
         file.truncate(0)
         for key in MCPlayer.data.keys():
             value = MCPlayer.data[key]
-            file.write('"' + str(key) + '"' + ': ' + str(value) + ',\n')
+            file.write('"""' + str(key) + '"""' + ': ' + str(value) + ',\n')
 
 
 class MCPlayer(Player):
@@ -430,11 +430,21 @@ class MCPlayer(Player):
 
     def board_to_key(self, board):
         """Convert the board to a key that the dictionary can use."""
-        key = self.color + '\n'
+        key = ''
         for row in board.board:
             for char in row:
-                key += char
+                if char == self.color:
+                    key += 'r'
+                elif char == '.':
+                    key += '.'
+                else:
+                    key += 'b'
             key += '\n'
+
+        if self.color == 'b':
+            rev_key = ''
+            for char in key:
+                rev_key = char + rev_key
         return key
 
     def decide_move(self, board):
@@ -453,7 +463,7 @@ class MCPlayer(Player):
                 if best_move != "":
                     rev_move = reverse_move(best_move)
                     best_board.make_move(rev_move)
-                    best_board.make_move(move)
+                best_board.make_move(move)
                 best_score = score
                 best_move = move
 
@@ -468,6 +478,7 @@ class MCPlayer(Player):
             board.make_move(rev_move)
 
         self.path.add(best_board)
+        print(self.board_to_key(best_board), len(self.path))
         return best_move
 
     def new_board(self, board):
@@ -477,9 +488,11 @@ class MCPlayer(Player):
 
     def results(self, win):
         """Update all used board states."""
+        print('ROBOT.HAS.FINISHED')
         for board in self.path:
             self.update(board, win)
         self.path = set()
+        store()
 
     def update(self, board, win):
         """Add the results of a match to the win-percentage of a
@@ -496,10 +509,10 @@ class MCPlayer(Player):
         value = MCPlayer.data.get(key)
         if value:
             if value[1] == 0:
-                return 0
+                return 0.5
             return float(value[0]) / float(value[1])  # wins / total
         return False
 
 
-halma_board = Board(2, 2, 1, ['mc', 'h'])
+halma_board = Board(2, 10, 5, ['mc', 'mc'])
 main_game_loop(halma_board)
