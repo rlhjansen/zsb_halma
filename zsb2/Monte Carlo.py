@@ -2,6 +2,7 @@
 #
 #
 
+from __future__ import print_function
 import Classes as Cl
 from copy import deepcopy
 
@@ -13,12 +14,13 @@ def load_data(name='Database'):
 
 
 def reverse_move(move):
-        i = 1
-        for char in move[1:]:
-            if char.isalpha():
-                break
-            i += 1
-        return move[i:] + move[:i]
+    """Return a move that negates the input move."""
+    i = 1
+    for char in move[1:]:
+        if char.isalpha():
+            break
+        i += 1
+    return move[i:] + move[:i]
 
 
 def store(name='Database'):
@@ -38,6 +40,7 @@ class MCPlayer(Cl.Player):
         self.path = set()
 
     def board_to_key(self, board):
+        """Convert the board to a key that the dictionary can use."""
         key = self.color + '\n'
         for row in board.board:
             for char in row:
