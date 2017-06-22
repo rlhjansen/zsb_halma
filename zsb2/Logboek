@@ -4,4 +4,4 @@
 21/6: Ik ben met Jesper aan het concept van Monte Carlo gaan zitten. We stuitten op het probleem dat we een manier nodig
       hadden om alle data op te slaan. Uiteindelijk besloten we dit te doen in een tekstbestand.
       Ik heb met Reitze gepolst hoe het Monte Carlo algoritme gaat worden toegepast in het programma.
-22/6:
+22/6: Ik heb Monte Carlo afgeschreven, op het moment dat de code van Reitze af is kunnen we debuggen.

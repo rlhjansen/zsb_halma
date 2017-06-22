@@ -3,41 +3,108 @@
 #
 
 import Classes as Cl
+from copy import deepcopy
+
+
+def load_data(name='Database'):
+    """Return a dictionary out of the database file."""
+    with open(name, "r") as file:
+        return eval("{" + file.read() + "}")
+
+
+def reverse_move(move):
+        i = 1
+        for char in move[1:]:
+            if char.isalpha():
+                break
+            i += 1
+        return move[i:] + move[:i]
+
+
+def store(name='Database'):
+    """Reset the Database file and write all contents of the dictionary."""
+    with open(name, 'w') as file:
+        file.truncate(0)
+        for key in MCPlayer.data.keys():
+            value = MCPlayer.data[key]
+            file.write('"' + str(key) + '"' + ': ' + str(value) + ',\n')
 
 
 class MCPlayer(Cl.Player):
+    data = load_data()
 
     def __init__(self):
         super(MCPlayer, self).__init__()
-        self.data = {}
-        self.load_data()
+        self.path = set()
+
+    def board_to_key(self, board):
+        key = self.color + '\n'
+        for row in board.board:
+            for char in row:
+                key.append(char)
+            key.append('\n')
+        return key
 
     def decide_move(self, board):
         return self.find_best_move(board)
 
-    # finding the best move from the current situation
     def find_best_move(self, board):
+        """Return the move that will result in a board with the highest
+        win rate."""
         best_score = -1
         best_move = ""
+        best_board = deepcopy(board)
         for move in board.get_moves_player(self):
-            new_board = board.make_move(move)
-            new_board.check_board_exist()
-            score = self.data[new_board]
-            if score > best_score:
+            board.make_move(move)
+            score = self.get_win(board)
+
+            if score and score > best_score:
+                if best_move != "":
+                    rev_move = reverse_move(best_move)
+                    best_board.make_move(rev_move)
+                    best_board.make_move(move)
                 best_score = score
                 best_move = move
+
+            elif score == False:
+                self.new_board(board)
+                if best_score == -1:
+                    best_move = move
+                    best_score = 0
+                    best_board.make_move(move)
+
+            rev_move = reverse_move(move)
+            board.make_move(rev_move)
+
+        self.path.add(best_board)
         return best_move
 
-    def load_data(self, name='Database'):
-        with open(name, "r") as file:
-            self.data = eval("{" + file.read() + "}")
+    def new_board(self, board):
+        """Make a new board setting in the dictionary."""
+        key = self.board_to_key(board)
+        MCPlayer.data[key] = [0, 0]
 
-    def save(self, key, value, name='Database'):
-        self.data[key] = value
-        with open(name, "a") as file:
-            file.write('"' + str(key) + '"' + ': ' + str(value) + ',\n')
+    def results(self, win):
+        """Update all used board states."""
+        for board in self.path:
+            self.update(board, win)
 
+    def update(self, board, win):
+        """Add the results of a match to the win-percentage of a
+        board setting."""
+        key = self.board_to_key(board)
+        value = self.data[key]
+        if win:
+            value[0] += 1
+        value[1] += 1
 
-database = load_data()
-save(database, 'key', '\"value\"')
-print(database['key'])
+    def get_win(self, board):
+        """Return the win-percentage of a board setting."""
+        key = self.board_to_key(board)
+        value = MCPlayer.data.get(key)
+        if value:
+            if value[1] == 0:
+                return 0
+            return float(value[0]) / float(value[1])  # wins / total
+        return False
+
