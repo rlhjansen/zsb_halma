@@ -1,6 +1,7 @@
 
 import imports
 import class_independent_functions as cif
+import MonteCarlo as mc
 
 
 class Player:
@@ -143,7 +144,7 @@ class Board:
     # playertypes = list of playertipes i.e. ['h'
     def __init__(self, players, size, rows, playertypes):
         self.board = [['.' for _ in range(size)] for _ in range(size)]
-        self.players = [Player(player, size-1, rows) for player in range(players)]
+        self.players = self.init_players(playertypes, size, rows)
         self.size = size - 1
         self.direction_list = self.make_direction_list()
         self.color_player_dict = self.make_player_dictionary(players)
@@ -157,10 +158,11 @@ class Board:
         for i in range(len(players)):
             if players[i] == 'h':
                 self.players.append(Player(i, size - 1, rows))
-            #elif players[i] == 'mc':
-            #    self.players.append(MCPlayer(i, size - 1, rows))
+            elif players[i] == 'mc':
+                self.players.append(mc.MCPlayer(i, size - 1, rows))
             #elif players[i] == 'ab':
             #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
+
 
     # returns the score for a player for the current board
     # 200 here is supposed to drive the player to a win.
