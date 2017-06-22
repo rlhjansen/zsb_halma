@@ -4,4 +4,7 @@
 21/6: Ik ben met Jesper aan het concept van Monte Carlo gaan zitten. We stuitten op het probleem dat we een manier nodig
       hadden om alle data op te slaan. Uiteindelijk besloten we dit te doen in een tekstbestand.
       Ik heb met Reitze gepolst hoe het Monte Carlo algoritme gaat worden toegepast in het programma.
-22/6: Ik heb Monte Carlo afgeschreven, op het moment dat de code van Reitze af is kunnen we debuggen.
+22/6: Ik heb Monte Carlo afgeschreven, op het moment dat de code van Reitze af is kunnen we debuggen. Aan het einde van
+      de dag en een hele hoop debuggen is de code klaar. Ik laat hem de hele nacht runnen en ik hoop dat hij een potje
+      af speelt (maar ik denk het niet). Waarschijnlijk zullen we hem begeleidend moeten leren, e.g. punten geven als
+      de pionnen dichter bij het einddoel komen.
