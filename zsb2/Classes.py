@@ -391,5 +391,5 @@ def ask_new_game():
             print("that's not a valid option")
             new_game = raw_input("Do you want to start a new game? (y/n):")
 
-halma_board = Board(2, 2, 1, ['h', 'h'])
+halma_board = Board(2, 2, 1, ['h', 'mc'])
 main_game_loop(halma_board)

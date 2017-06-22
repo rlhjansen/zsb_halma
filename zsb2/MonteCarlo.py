@@ -111,3 +111,4 @@ class MCPlayer(Cl.Player):
             return float(value[0]) / float(value[1])  # wins / total
         return False
 
+
