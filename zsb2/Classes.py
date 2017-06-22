@@ -443,7 +443,9 @@ class MCPlayer(Player):
         best_score = -1
         best_move = ""
         best_board = deepcopy(board)
+        print(board.get_moves_player(self))
         for move in board.get_moves_player(self):
+            move = cif.to_movestring(move, board.size)
             board.make_move(move)
             score = self.get_win(board)
 
@@ -499,5 +501,5 @@ class MCPlayer(Player):
         return False
 
 
-halma_board = Board(2, 2, 1, ['h', 'mc'])
+halma_board = Board(2, 2, 1, ['mc', 'h'])
 main_game_loop(halma_board)
