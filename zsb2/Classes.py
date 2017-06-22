@@ -2,6 +2,7 @@
 from __future__ import print_function
 import class_independent_functions as cif
 from copy import deepcopy
+import time
 
 
 class Player:
@@ -66,7 +67,7 @@ class Player:
             [x, y] = self.pieces[i]
             if x == x_start and y == y_start:
                 self.pieces[i] = [x_end, y_end]
-            break
+                break
 
     # returns starting locations for a player
     def get_start_locations(self, number, size, rows):
@@ -136,6 +137,7 @@ class Player:
 
     def results(self, Boolean):
         pass
+
 
 class Board:
     # players = number of players
@@ -215,7 +217,6 @@ class Board:
         self.board[x_start][y_start] = '.'
         self.board[x_end][y_end] = objectstring
         self.make_move_for_player(moving_player, x_start, y_start, x_end, y_end)
-        self.next_player()
 
     # makes sure that the player.pieces are congruent with the pieces on the board
     def make_move_for_player(self, moving_player, x_start, y_start, x_end, y_end):
@@ -300,7 +301,6 @@ class Board:
                 print("you're not that player")
                 return True
 
-
     # checks if a position on the board is unoccupied
     def check_free(self, x, y):
         if self.board[x][y] == '.':
@@ -341,7 +341,6 @@ class Board:
         else:
             return False
 
-
     def no_winner_yet(self):
         no_winner = True
         for player in self.players:
@@ -355,14 +354,13 @@ class Board:
                 return player.player_whole_colour()
 
 
-
-
-
 def main_game_loop(halma_board):
     turn = 1
     while halma_board.no_winner_yet():
-        print("turn", turn)
-        halma_board.print_board()
+        if turn % 10000 == 1:
+            print("turn", turn, halma_board.current_turn.color)
+            halma_board.print_board()
+
         not_legal = True
         while not_legal:
             move = halma_board.current_turn.decide_move(halma_board)
@@ -377,6 +375,7 @@ def main_game_loop(halma_board):
         #drawfile.draw(halma_board, move)
         halma_board.make_move(move)
         turn += 1
+        halma_board.next_player()
     for player in halma_board.players:
         player.results(player.player_wins())
     winner = halma_board.who_won()
@@ -395,6 +394,7 @@ def ask_new_game():
             new_game = raw_input("Do you want to start a new game? (y/n):")
 
 
+# ==========================================
 # ----- MONTE CARLO FUNCTIONS ARE HERE -----
 def load_data(name='Database'):
     """Return a dictionary out of the database file."""
@@ -402,14 +402,14 @@ def load_data(name='Database'):
         return eval("{" + file.read() + "}")
 
 
-def reverse_move(move):
+def reverse_move(move, board):
     """Return a move that negates the input move."""
     i = 1
     for char in move[1:]:
         if char.isalpha():
             break
         i += 1
-    return move[i:] + move[:i]
+    board.make_move(move[i:] + move[:i])
 
 
 def store(name='Database'):
@@ -430,21 +430,22 @@ class MCPlayer(Player):
 
     def board_to_key(self, board):
         """Convert the board to a key that the dictionary can use."""
-        key = ''
+        key = '\n'
         for row in board.board:
             for char in row:
                 if char == self.color:
-                    key += 'r'
+                    key += 'X'
                 elif char == '.':
                     key += '.'
                 else:
-                    key += 'b'
+                    key += 'O'
             key += '\n'
 
         if self.color == 'b':
             rev_key = ''
             for char in key:
                 rev_key = char + rev_key
+            return rev_key
         return key
 
     def decide_move(self, board):
@@ -452,33 +453,31 @@ class MCPlayer(Player):
         win rate."""
         best_score = -1
         best_move = ""
-        best_board = deepcopy(board)
-        print(board.get_moves_player(self))
-        for move in board.get_moves_player(self):
-            move = cif.to_movestring(move, board.size)
+        best_key = ''
+        for alpha_move in board.get_moves_player(self):
+            move = cif.to_movestring(alpha_move, board.size)
             board.make_move(move)
-            score = self.get_win(board)
+            key = self.board_to_key(board)
+            score = self.get_win(key)
 
-            if score and score > best_score:
-                if best_move != "":
-                    rev_move = reverse_move(best_move)
-                    best_board.make_move(rev_move)
-                best_board.make_move(move)
+            if score and score > best_score and key not in self.path:
+                if score == 0.499:
+                    pass
+                    # score = board.get_score(self)
                 best_score = score
                 best_move = move
+                best_key = key
 
             elif score == False:
                 self.new_board(board)
                 if best_score == -1:
                     best_move = move
                     best_score = 0
-                    best_board.make_move(move)
+                    best_key = key
 
-            rev_move = reverse_move(move)
-            board.make_move(rev_move)
+            reverse_move(move, board)
 
-        self.path.add(best_board)
-        print(self.board_to_key(best_board), len(self.path))
+        self.path.add(best_key)
         return best_move
 
     def new_board(self, board):
@@ -503,13 +502,12 @@ class MCPlayer(Player):
             value[0] += 1
         value[1] += 1
 
-    def get_win(self, board):
+    def get_win(self, key):
         """Return the win-percentage of a board setting."""
-        key = self.board_to_key(board)
         value = MCPlayer.data.get(key)
         if value:
             if value[1] == 0:
-                return 0.5
+                return 0.499
             return float(value[0]) / float(value[1])  # wins / total
         return False
 
