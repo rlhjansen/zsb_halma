@@ -49,9 +49,6 @@ class MCPlayer(Cl.Player):
         return key
 
     def decide_move(self, board):
-        return self.find_best_move(board)
-
-    def find_best_move(self, board):
         """Return the move that will result in a board with the highest
         win rate."""
         best_score = -1
@@ -91,6 +88,7 @@ class MCPlayer(Cl.Player):
         """Update all used board states."""
         for board in self.path:
             self.update(board, win)
+        self.path = set()
 
     def update(self, board, win):
         """Add the results of a match to the win-percentage of a
@@ -110,5 +108,4 @@ class MCPlayer(Cl.Player):
                 return 0
             return float(value[0]) / float(value[1])  # wins / total
         return False
-
 
