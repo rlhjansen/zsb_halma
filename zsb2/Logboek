@@ -1,0 +1,7 @@
+--- Jochem Hölscher, 11007729 ---
+20/6: Er is een planning gemaakt waarin werd voorgesteld wie wat zou doen. Ik was een algoritme gaan zoeken samen met
+      Jesper. We zijn op Monte Carlo uitgekomen om te vergelijken met alpha-beta.
+21/6: Ik ben met Jesper aan het concept van Monte Carlo gaan zitten. We stuitten op het probleem dat we een manier nodig
+      hadden om alle data op te slaan. Uiteindelijk besloten we dit te doen in een tekstbestand.
+      Ik heb met Reitze gepolst hoe het Monte Carlo algoritme gaat worden toegepast in het programma.
+22/6:
