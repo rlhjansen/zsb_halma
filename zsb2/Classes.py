@@ -20,6 +20,7 @@ class Player:
         for i in range(rows):
             for _ in range(i+1):
                 goal_manhattan += i
+        print(goal_manhattan)
         return goal_manhattan
 
     # checks if the player wins
@@ -57,6 +58,7 @@ class Player:
         manhattan = 0
         manhattan += abs(self.goal[0] - x)
         manhattan += abs(self.goal[1] - y)
+        print(x, y)
         return manhattan
 
     # moves the piece in the player's piecelist
@@ -123,7 +125,18 @@ class Player:
             exit(0)
         return chosen_move
 
+    def player_whole_colour(self):
+        if self.color == 'r':
+            return 'Red'
+        elif self.color == 'b':
+            return 'Blue'
+        elif self.color == 'g':
+            return 'Green'
+        elif self.color == 'y':
+            return 'Yellow'
 
+    def results(self, Boolean):
+        pass
 
 class Board:
     # players = number of players
@@ -247,15 +260,15 @@ class Board:
             piece_on_coord = self.board[x][y]
             if piece_on_coord != '.':
                 [jump_x, jump_y] = cif.get_jump_loc(x, y, new_x, new_y)
-                if self.check_jump(new_x, new_y, jump_x, jump_y, dx, dy) and \
-                        self.check_free(jump_x, jump_y) and \
-                        self.on_board(jump_x, jump_y):
-                    moves_list.append([jump_x, jump_y])
-                    new_piece = [jump_x, jump_y]
-                    for [new_dx, new_dy] in self.direction_list:
-                        temp_move = self.scan(new_piece, new_dx, new_dy, only_jumps=True)
-                        if temp_move != []:
-                            moves_list.append(self.scan(new_piece, new_dx, new_dy, only_jumps=True))
+                if self.on_board(jump_x, jump_y):
+                    if self.check_jump(new_x, new_y, jump_x, jump_y, dx, dy) and \
+                        self.check_free(jump_x, jump_y):
+                        moves_list.append([jump_x, jump_y])
+                        new_piece = [jump_x, jump_y]
+                        for [new_dx, new_dy] in self.direction_list:
+                            temp_move = self.scan(new_piece, new_dx, new_dy, only_jumps=True)
+                            if temp_move != []:
+                                moves_list.append(self.scan(new_piece, new_dx, new_dy, only_jumps=True))
                 break
             new_x += dx
             new_y += dy
@@ -283,6 +296,7 @@ class Board:
                     if player == self.current_turn:
                         return False
                 else:
+                    return True
                     print("that's not a valid move")
             else:
                 print("you're not that player")
@@ -338,9 +352,16 @@ class Board:
                 no_winner = False
         return no_winner
 
+    def who_won(self):
+        for player in self.players:
+            if player.player_wins():
+                return player.player_whole_colour()
 
-def main_game_loop():
-    halma_board = Board(2, 9, 4, ['h', 'h'])
+
+
+
+
+def main_game_loop(halma_board):
     turn = 1
     while halma_board.no_winner_yet():
         print("turn", turn)
@@ -350,12 +371,18 @@ def main_game_loop():
             move = halma_board.current_turn.decide_move(halma_board)
             if move == 'check moves':
                 print([x for x in cif.to_movestrings(halma_board.get_moves_player(halma_board.current_turn), halma_board.size)])
+            elif move == 'manhattan':
+                print(halma_board.current_turn.get_total_manhattan())
+            elif move == 'goalmanhattan':
+                print(halma_board.current_turn.goal_manhattan)
             else:
                 not_legal = halma_board.check_not_legal(move)
         #drawfile.draw(halma_board, move)
         halma_board.make_move(move)
+    for player in halma_board.players:
+        player.results(player.player_wins())
     winner = halma_board.who_won()
-    print("Congratulations!, the ", winner[1], "has won!")
+    print("Congratulations!, the ", winner, "has won!")
 
 
 def ask_new_game():
@@ -369,4 +396,5 @@ def ask_new_game():
             print("that's not a valid option")
             new_game = raw_input("Do you want to start a new game? (y/n):")
 
-main_game_loop()
+halma_board = Board(2, 2, 1, ['h', 'h'])
+main_game_loop(halma_board)
