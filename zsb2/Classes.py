@@ -20,7 +20,6 @@ class Player:
         for i in range(rows):
             for _ in range(i+1):
                 goal_manhattan += i
-        print(goal_manhattan)
         return goal_manhattan
 
     # checks if the player wins
@@ -58,7 +57,6 @@ class Player:
         manhattan = 0
         manhattan += abs(self.goal[0] - x)
         manhattan += abs(self.goal[1] - y)
-        print(x, y)
         return manhattan
 
     # moves the piece in the player's piecelist
@@ -182,9 +180,7 @@ class Board:
     def next_player(self):
         for i in range(len(self.players)):
             if self.players[i] == self.current_turn and i != len(self.players) - 1:
-                print(self.current_turn.get_color())
                 self.current_turn = self.players[i+1]
-                print(self.current_turn.get_color())
                 break
             else:
                 self.current_turn = self.players[0]
@@ -225,7 +221,6 @@ class Board:
 
     # returns a player object for a string input color
     def player_string_to_player(self, string):
-        print(string)
         return self.color_player_dict[string]
 
 
@@ -305,7 +300,6 @@ class Board:
 
     # checks if a position on the board is unoccupied
     def check_free(self, x, y):
-        print(x, " ", y)
         if self.board[x][y] == '.':
             return True
         else:
@@ -379,6 +373,7 @@ def main_game_loop(halma_board):
                 not_legal = halma_board.check_not_legal(move)
         #drawfile.draw(halma_board, move)
         halma_board.make_move(move)
+        turn += 1
     for player in halma_board.players:
         player.results(player.player_wins())
     winner = halma_board.who_won()
