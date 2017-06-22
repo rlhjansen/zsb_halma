@@ -3,7 +3,7 @@
 #
 
 from __future__ import print_function
-import Classes as Cl
+
 from copy import deepcopy
 
 
@@ -35,8 +35,8 @@ def store(name='Database'):
 class MCPlayer(Cl.Player):
     data = load_data()
 
-    def __init__(self):
-        super(MCPlayer, self).__init__()
+    def __init__(self, i, size, rows):
+        Cl.Player.__init__(self, i, size, rows)
         self.path = set()
 
     def board_to_key(self, board):
