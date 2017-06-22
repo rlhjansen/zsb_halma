@@ -1,5 +1,5 @@
 
-import imports as im
+import imports
 import class_independent_functions as cif
 
 
@@ -39,7 +39,7 @@ class Player:
         if number == 3:
             return [size, 0]
         if number == 1:
-            return [0,0]
+            return [0, 0]
 
     # returns the sum of all manhattan distances of a players pieces to his
     # goal location - the opposite corner -
@@ -115,6 +115,14 @@ class Player:
     def get_color(self):
         return self.color
 
+    # enter move from console, i.e. a3a4, or a3a5a7 when jumping
+    # enter q to quit
+    def decide_move(self, board):
+        chosen_move = raw_input('enter a move:')
+        if chosen_move == 'q':
+            exit(0)
+        return chosen_move
+
 
 
 class Board:
@@ -126,21 +134,22 @@ class Board:
         self.board = [['.' for _ in range(size)] for _ in range(size)]
         self.players = [Player(player, size-1, rows) for player in range(players)]
         self.size = size - 1
-        self.direction_list = self.make_direction_list(players)
+        self.direction_list = self.make_direction_list()
         self.color_player_dict = self.make_player_dictionary(players)
         for player in self.players:
             for [x,y] in player.get_pieces():
                 self.board[x][y] = player.get_color()
+        self.current_turn = self.players[0]
 
-    def init_players(self, players):
+    def init_players(self, players, size, rows):
         self.players = []
         for i in range(len(players)):
             if players[i] == 'h':
                 self.players.append(Player(i, size - 1, rows))
-            elif players[i] == 'mc':
-                self.players.append(MCPlayer(i, size - 1, rows))
-            elif players[i] == 'ab':
-                self.players.append(AlfaBètaPlayer(i, size - 1, rows))
+            #elif players[i] == 'mc':
+            #    self.players.append(MCPlayer(i, size - 1, rows))
+            #elif players[i] == 'ab':
+            #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
 
     # returns the score for a player for the current board
     # 200 here is supposed to drive the player to a win.
@@ -156,6 +165,17 @@ class Board:
                     score += 200
         return score
 
+    # set self.current_turn to next player
+    def next_player(self):
+        for i in range(len(self.players)):
+            if self.players[i] == self.current_turn and i != len(self.players) - 1:
+                print(self.current_turn.get_color())
+                self.current_turn = self.players[i+1]
+                print(self.current_turn.get_color())
+                break
+            else:
+                self.current_turn = self.players[0]
+
 
     # returns a dictionary that returns a player object, with color input
     def make_player_dictionary(self, number_of_players):
@@ -163,6 +183,7 @@ class Board:
         player_dict = {}
         for i in range(number_of_players):
             player_dict[colorlist[i]] = self.players[i]
+        return player_dict
 
     # returns a list with x,y direction combinations that are allowed to explore
     # in
@@ -176,29 +197,34 @@ class Board:
 
     # make an actual move on the board
     def make_move(self, movestring):
-        [[x_start, y_start], [x_end, y_end]] = cif.to_coordinates(movestring)
-        moving_player = self.board.get_player(x_start,y_start)
-        moving_player.move(x_start, y_start, x_end, y_end)
+        [[x_start, y_start], [x_end, y_end]] = cif.to_coordinates(movestring, self.size)
+        objectstring = self.board[x_start][y_start]
+        moving_player = self.player_string_to_player(objectstring)
         self.board[x_start][y_start] = '.'
-        self.board[x_end][y_end] = moving_player
+        self.board[x_end][y_end] = objectstring
         self.make_move_for_player(moving_player, x_start, y_start, x_end, y_end)
+        self.next_player()
 
     # makes sure that the player.pieces are congruent with the pieces on the board
     def make_move_for_player(self, moving_player, x_start, y_start, x_end, y_end):
-        player = player_string_to_player(moving_player)
-        player.move_piece(x_start, y_start, x_end, y_end)
+        moving_player.move_piece(x_start, y_start, x_end, y_end)
 
 
     # returns a player object for a string input color
     def player_string_to_player(self, string):
+        print(string)
         return self.color_player_dict[string]
 
 
     # returns a list of legal moves that a player can make
     def get_moves_player(self, player):
         moves_list = []
-        for piece in self.players[player-1].get_pieces():
-            moves_list.extend(self.get_moves_piece(piece))
+        if type(player) == int:
+            for piece in self.players[player-1].get_pieces():
+                moves_list.extend(self.get_moves_piece(piece))
+        else:
+            for piece in player.get_pieces():
+                moves_list.extend(self.get_moves_piece(piece))
         return moves_list
 
     # returns a list of moves that a piece can make
@@ -234,15 +260,38 @@ class Board:
             new_x += dx
             new_y += dy
         if not only_jumps:
-            if self.check_free(x+dx, y+dy) and self.on_board(x+dx, y+dy):
-                moves_list.append([x+dx, y+dy])
+            if self.on_board(x+dx, y+dy):
+                if self.check_free(x+dx, y+dy):
+                    moves_list.append([x+dx, y+dy])
             real_moves = [[[x, y], end_loc] for end_loc in moves_list]
         else:
             real_moves = moves_list
         return real_moves
 
+    # checks if there's a piece on the start position mentioned
+    # checks if the move is in the list of that players possible moves
+    def check_not_legal(self, move):
+        movelist = cif.to_coordinates(move, self.size)
+        x, y = movelist[0][0], movelist[0][1]
+        if self.board[x][y] == '.':
+            print("there is no piece on that position")
+            return True
+        else:
+            player = self.color_player_dict[self.board[x][y]]
+            if player == self.current_turn:
+                if movelist in self.get_moves_piece([x,y]):
+                    if player == self.current_turn:
+                        return False
+                else:
+                    print("that's not a valid move")
+            else:
+                print("you're not that player")
+                return True
+
+
     # checks if a position on the board is unoccupied
     def check_free(self, x, y):
+        print(x, " ", y)
         if self.board[x][y] == '.':
             return True
         else:
@@ -282,6 +331,42 @@ class Board:
             return False
 
 
-halma_board = Board(2, 9, 4)
-print(halma_board)
-print(halma_board.get_board())
+    def no_winner_yet(self):
+        no_winner = True
+        for player in self.players:
+            if player.player_wins():
+                no_winner = False
+        return no_winner
+
+
+def main_game_loop():
+    halma_board = Board(2, 9, 4, ['h', 'h'])
+    turn = 1
+    while halma_board.no_winner_yet():
+        print("turn", turn)
+        halma_board.print_board()
+        not_legal = True
+        while not_legal:
+            move = halma_board.current_turn.decide_move(halma_board)
+            if move == 'check moves':
+                print([x for x in cif.to_movestrings(halma_board.get_moves_player(halma_board.current_turn), halma_board.size)])
+            else:
+                not_legal = halma_board.check_not_legal(move)
+        #drawfile.draw(halma_board, move)
+        halma_board.make_move(move)
+    winner = halma_board.who_won()
+    print("Congratulations!, the ", winner[1], "has won!")
+
+
+def ask_new_game():
+    new_game = raw_input("Do you want to start a new game? (y/n):")
+    while True:
+        if new_game == 'y':
+            return True
+        elif new_game == 'n':
+            return False
+        else:
+            print("that's not a valid option")
+            new_game = raw_input("Do you want to start a new game? (y/n):")
+
+main_game_loop()

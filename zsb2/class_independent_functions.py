@@ -1,6 +1,6 @@
 
-# translates a movestring, i.e. f4f3, to coordinate set i.e. [[
-def to_coordinates(movestring):
+# translates a movestring, i.e. f4a1, to coordinate set i.e. [[5,3],[0,0]]
+def to_coordinates(movestring, boardsize):
     startpoints_x = []
     startpoints_y = []
     x_coords = []
@@ -10,32 +10,38 @@ def to_coordinates(movestring):
         if not movestring[i].isdigit():
             startpoints_x.append(i)
         else:
-            if startpoints_y == []:
-                startpoints_y.append(i)
-            elif startpoints_x[-1] > startpoints_y[-1]:
+            if not startpoints_y == []:
+                if startpoints_x[-1] > startpoints_y[-1]:
+                    startpoints_y.append(i)
+            else:
                 startpoints_y.append(i)
     for i in startpoints_x:
-        movestring[i].lower()
-        x_coords.append(ord(movestring[i]) - ord('a'))
-    for i in startpoints_y:
-        temp_end = 0
-        for number in startpoints_x:
-            if i < number:
-                temp_end = number
-                break
-        if temp_end == 0:
-            temp_end = len(movestring)
-        y_coords.append(int(movestring[i:temp_end]))
+        x_coords.append(ord(movestring[i])-ord('a'))
+    for i in range(len(startpoints_y)):
+        print("yay")
+        if startpoints_x[-1] > startpoints_y[i]:
+            y_coords.append(boardsize - int(movestring[startpoints_y[i]:startpoints_x[i+1]])+1)
+        else:
+            y_coords.append(boardsize - int(movestring[startpoints_y[i]:])+1)
     for i in range(len(x_coords)):
-        returnlist.append([x_coords[i], y_coords[i]])
+        returnlist.append([y_coords[i], x_coords[i]])
+    print(returnlist)
     return returnlist
 
-def to_movestring(move):
+
+
+def to_movestring(move, boardsize):
     movestring = ""
     for [x, y] in move:
         movestring += chr(ord('a')+x)
-        movestring += str(y)
+        movestring += str(boardsize - y+1)
     return movestring
+
+def to_movestrings(moves, boardsize):
+    move_list = []
+    for move in moves:
+        move_list.append(to_movestring(move, boardsize))
+    return move_list
 
 # returns the landing location after a jump
 def get_jump_loc(x, y, new_x, new_y):
@@ -44,5 +50,5 @@ def get_jump_loc(x, y, new_x, new_y):
     return [land_x, land_y]
 
 
-print(to_movestring([[1,2], [0,3], [1,3]]))
-print(to_coordinates('b2a3b3'))
+print(to_movestring([[1,2], [0,3], [1,3]], 10))
+print(to_coordinates('a1a3a2', 10))
