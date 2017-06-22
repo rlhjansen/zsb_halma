@@ -1,5 +1,6 @@
 
 from __future__ import print_function
+import class_independent_functions as cif
 from copy import deepcopy
 
 
@@ -153,14 +154,15 @@ class Board:
         self.current_turn = self.players[0]
 
     def init_players(self, players, size, rows):
-        self.players = []
+        player_list = []
         for i in range(len(players)):
             if players[i] == 'h':
-                self.players.append(Player(i, size - 1, rows))
+                player_list.append(Player(i, size - 1, rows))
             elif players[i] == 'mc':
-                self.players.append(MCPlayer(i, size - 1, rows))
+                player_list.append(MCPlayer(i, size - 1, rows))
             #elif players[i] == 'ab':
             #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
+        return player_list
 
 
     # returns the score for a player for the current board;
