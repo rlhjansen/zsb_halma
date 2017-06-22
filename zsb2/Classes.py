@@ -164,7 +164,7 @@ class Board:
             #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
 
 
-    # returns the score for a player for the current board
+    # returns the score for a player for the current board;
     # 200 here is supposed to drive the player to a win.
     def get_score(self, player):
         score = 0
