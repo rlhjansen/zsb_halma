@@ -23,7 +23,7 @@ def to_coordinates(movestring, boardsize):
         else:
             y_coords.append(boardsize - int(movestring[startpoints_y[i]:])+1)
     for i in range(len(x_coords)):
-        returnlist.append([y_coords[i], x_coords[i]])
+        returnlist.append([x_coords[i], y_coords[i]])
     return returnlist
 
 
