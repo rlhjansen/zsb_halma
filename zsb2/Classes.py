@@ -138,7 +138,7 @@ class Player:
             return 'Yellow'
 
     def results(self, Boolean):
-        pass
+        return 0
 
 
 class Board:
@@ -387,12 +387,17 @@ def main_game_loop(halma_board):
         halma_board.make_move(move)
         turn += 1
         halma_board.next_player()
+
+    new_states = 0
     for player in halma_board.players:
-        player.results(player.player_wins())
+        new_states += player.results(player.player_wins())
+    print(new_states * 100 / turn, 'percentage of states were re-used')
+
     winner = halma_board.who_won()
     t1 = time()
     print("Congratulations!,", winner, "has won!")
     print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
+    print()
     halma_board.reset_board()
 
 
@@ -507,9 +512,11 @@ class MCPlayer(Player):
 
     def results(self, win):
         """Update all used board states."""
+        new_states = 0
         for key in self.path:
             if key not in MCPlayer.data:
                 MCPlayer.data[key] = [0, 0]
+                new_states += 1
 
             value = MCPlayer.data[key]
             if win:
@@ -517,6 +524,7 @@ class MCPlayer(Player):
             value[1] += 1
 
         self.path = set()
+        return new_states
 
     def get_win(self, key):
         """Return the win-percentage of a board setting."""
