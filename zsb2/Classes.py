@@ -1,6 +1,7 @@
 
 from __future__ import print_function
 import class_independent_functions as cif
+from random import randint
 from copy import deepcopy
 import time
 
@@ -31,7 +32,6 @@ class Player:
         else:
             return False
 
-
     # returns a player's goal location, the opposite side of the board
     def goal_location(self, number, size):
         if number == 0:
@@ -50,7 +50,6 @@ class Player:
         for piece in self.get_pieces():
             total_manhattan += self.calculate_manhattan(piece)
         return total_manhattan
-
 
     # returns the manhattan distance from a piece to the goal location
     # of that player - the opposite corner -
@@ -166,7 +165,6 @@ class Board:
             #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
         return player_list
 
-
     # returns the score for a player for the current board;
     # 200 here is supposed to drive the player to a win.
     def get_score(self, player):
@@ -189,7 +187,6 @@ class Board:
                 break
             else:
                 self.current_turn = self.players[0]
-
 
     # returns a dictionary that returns a player object, with color input
     def make_player_dictionary(self, number_of_players):
@@ -222,11 +219,9 @@ class Board:
     def make_move_for_player(self, moving_player, x_start, y_start, x_end, y_end):
         moving_player.move_piece(x_start, y_start, x_end, y_end)
 
-
     # returns a player object for a string input color
     def player_string_to_player(self, string):
         return self.color_player_dict[string]
-
 
     # returns a list of legal moves that a player can make
     def get_moves_player(self, player):
@@ -357,9 +352,12 @@ class Board:
 def main_game_loop(halma_board):
     turn = 1
     while halma_board.no_winner_yet():
-        if turn % 10000 == 1:
-            print("turn", turn, halma_board.current_turn.color)
+
+        if False:
             halma_board.print_board()
+            print()
+            print("turn", turn, halma_board.current_turn.color)
+            print(halma_board.current_turn.get_total_manhattan())
 
         not_legal = True
         while not_legal:
@@ -451,7 +449,7 @@ class MCPlayer(Player):
     def decide_move(self, board):
         """Return the move that will result in a board with the highest
         win rate."""
-        best_score = -1
+        best_score = -99999
         best_move = ""
         best_key = ''
         for alpha_move in board.get_moves_player(self):
@@ -461,19 +459,23 @@ class MCPlayer(Player):
             score = self.get_win(key)
 
             if score and score > best_score and key not in self.path:
-                if score == 0.499:
-                    pass
-                    # score = board.get_score(self)
                 best_score = score
                 best_move = move
                 best_key = key
 
             elif score == False:
                 self.new_board(board)
-                if best_score == -1:
+                score = -self.get_total_manhattan()
+
+                if score > best_score:
                     best_move = move
-                    best_score = 0
+                    best_score = score
                     best_key = key
+
+            elif best_score > 0 and randint(0, 9) == 9:
+                best_move = move
+                best_score = score
+                best_key = key
 
             reverse_move(move, board)
 
@@ -487,16 +489,14 @@ class MCPlayer(Player):
 
     def results(self, win):
         """Update all used board states."""
-        print('ROBOT.HAS.FINISHED')
-        for board in self.path:
-            self.update(board, win)
+        for key in self.path:
+            self.update(key, win)
         self.path = set()
         store()
 
-    def update(self, board, win):
+    def update(self, key, win):
         """Add the results of a match to the win-percentage of a
         board setting."""
-        key = self.board_to_key(board)
         value = self.data[key]
         if win:
             value[0] += 1
@@ -507,10 +507,11 @@ class MCPlayer(Player):
         value = MCPlayer.data.get(key)
         if value:
             if value[1] == 0:
-                return 0.499
+                return -self.get_total_manhattan()  # Guideline
             return float(value[0]) / float(value[1])  # wins / total
         return False
 
 
-halma_board = Board(2, 10, 5, ['mc', 'mc'])
-main_game_loop(halma_board)
+while True:
+    halma_board = Board(2, 10, 5, ['mc', 'mc'])
+    main_game_loop(halma_board)
