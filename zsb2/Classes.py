@@ -13,6 +13,9 @@ class Player:
     # size is the boardsize
     def __init__(self, number, size, rows):
         self.color = self.set_color(number)
+        self.number = number
+        self.size = size
+        self.rows = rows
         self.pieces = self.get_start_locations(number, size, rows)
         self.goal = self.goal_location(number, size)
         self.goal_manhattan = self.calc_goal_manhattan(rows)
@@ -164,6 +167,16 @@ class Board:
             #elif players[i] == 'ab':
             #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
         return player_list
+
+
+    def reset_board(self):
+        for pl in self.players:
+            pl.pieces = pl.get_start_locations(pl.number, pl.size, pl.rows)
+        self.board = [['.' for _ in range(self.size + 1)] for _ in range(self.size+1)]
+        for player in self.players:
+            for [x,y] in player.get_pieces():
+                self.board[x][y] = player.get_color()
+        self.current_turn = self.players[0]
 
     # returns the score for a player for the current board;
     # 200 here is supposed to drive the player to a win.
