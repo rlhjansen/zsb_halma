@@ -3,7 +3,7 @@ from __future__ import print_function
 import class_independent_functions as cif
 from random import randint
 from copy import deepcopy
-import time
+from time import time
 
 
 class Player:
@@ -167,7 +167,6 @@ class Board:
             #elif players[i] == 'ab':
             #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
         return player_list
-
 
     def reset_board(self):
         for pl in self.players:
@@ -364,6 +363,7 @@ class Board:
 
 def main_game_loop(halma_board):
     turn = 1
+    t0 = time()
     while halma_board.no_winner_yet():
 
         if False:
@@ -390,7 +390,10 @@ def main_game_loop(halma_board):
     for player in halma_board.players:
         player.results(player.player_wins())
     winner = halma_board.who_won()
-    print("Congratulations!, the ", winner, "has won!")
+    t1 = time()
+    print("Congratulations!,", winner, "has won!")
+    print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
+    halma_board.reset_board()
 
 
 def ask_new_game():
@@ -409,6 +412,7 @@ def ask_new_game():
 # ----- MONTE CARLO FUNCTIONS ARE HERE -----
 def load_data(name='Database'):
     """Return a dictionary out of the database file."""
+    print('Loading the database...')
     with open(name, "r") as file:
         return eval("{" + file.read() + "}")
 
@@ -425,6 +429,7 @@ def reverse_move(move, board):
 
 def store(name='Database'):
     """Reset the Database file and write all contents of the dictionary."""
+    print("Saving data...")
     with open(name, 'w') as file:
         file.truncate(0)
         for key in MCPlayer.data.keys():
@@ -460,34 +465,39 @@ class MCPlayer(Player):
         return key
 
     def decide_move(self, board):
+        if randint(0, 9) == 9:
+            return self.rand_move(board)
+        return self.best_move(board)
+
+    def rand_move(self, board):
+        moves = board.get_moves_player(self)
+        move = None
+        key = None
+
+        while key in self.path or not key:
+            i = randint(0, len(moves) - 1)
+            move = cif.to_movestring(moves[i], board.size)
+            board.make_move(move)
+            key = self.board_to_key(board)
+            reverse_move(move, board)
+
+        return move
+
+    def best_move(self, board):
         """Return the move that will result in a board with the highest
         win rate."""
-        best_score = -99999
+        best_score = -1
         best_move = ""
         best_key = ''
-        for alpha_move in board.get_moves_player(self):
-            move = cif.to_movestring(alpha_move, board.size)
+        for num_move in board.get_moves_player(self):
+            move = cif.to_movestring(num_move, board.size)
             board.make_move(move)
             key = self.board_to_key(board)
             score = self.get_win(key)
 
-            if score and score > best_score and key not in self.path:
+            if score > best_score and key not in self.path:
                 best_score = score
                 best_move = move
-                best_key = key
-
-            elif score == False:
-                self.new_board(board)
-                score = -self.get_total_manhattan()
-
-                if score > best_score:
-                    best_move = move
-                    best_score = score
-                    best_key = key
-
-            elif best_score > 0 and randint(0, 9) == 9:
-                best_move = move
-                best_score = score
                 best_key = key
 
             reverse_move(move, board)
@@ -495,36 +505,30 @@ class MCPlayer(Player):
         self.path.add(best_key)
         return best_move
 
-    def new_board(self, board):
-        """Make a new board setting in the dictionary."""
-        key = self.board_to_key(board)
-        MCPlayer.data[key] = [0, 0]
-
     def results(self, win):
         """Update all used board states."""
         for key in self.path:
-            self.update(key, win)
-        self.path = set()
-        store()
+            if key not in MCPlayer.data:
+                MCPlayer.data[key] = [0, 0]
 
-    def update(self, key, win):
-        """Add the results of a match to the win-percentage of a
-        board setting."""
-        value = self.data[key]
-        if win:
-            value[0] += 1
-        value[1] += 1
+            value = MCPlayer.data[key]
+            if win:
+                value[0] += 1
+            value[1] += 1
+
+        self.path = set()
 
     def get_win(self, key):
         """Return the win-percentage of a board setting."""
         value = MCPlayer.data.get(key)
         if value:
             if value[1] == 0:
-                return -self.get_total_manhattan()  # Guideline
+                return 99  # This is never supposed to be best move.
             return float(value[0]) / float(value[1])  # wins / total
-        return False
+        return 0.5 - float(self.get_total_manhattan()) / 10000.0  # Guideline
 
 
-while True:
-    halma_board = Board(2, 10, 5, ['mc', 'mc'])
+halma_board = Board(2, 10, 5, ['mc', 'mc'])
+for _ in range(100):
     main_game_loop(halma_board)
+store()

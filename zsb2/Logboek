@@ -11,3 +11,5 @@
 23/6: Ik heb Monte Carlo een richting gegeven als het de eerste keer is dat hij een bepaalde stand tegenkomt. Nu lost
       hij razendsnel potjes op. Het aflezen en aanvullen van de database werkt. Ik ben focking happy en het is ook 2 uur
       s'nachts. Dus morgen wordt minder happy.
+      Ik heb vervolgens later op de dag gezeten aan het optimaliseren van het geheugengebruik van de Database en het
+      implementeren van een rand_move functie binnen decision_move
