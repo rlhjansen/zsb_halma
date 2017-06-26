@@ -162,10 +162,10 @@ class Board:
         for i in range(len(players)):
             if players[i] == 'h':
                 player_list.append(Player(i, size - 1, rows))
-            elif players[i] == 'mc':
-                player_list.append(MCPlayer(i, size - 1, rows))
-            #elif players[i] == 'ab':
-            #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
+        #    elif players[i] == 'mc':
+        #        player_list.append(MCPlayer(i, size - 1, rows))
+            elif players[i] == 'ab':
+                player_list.append(ABPlayer(i, size - 1, rows))
         return player_list
 
     def reset_board(self):
@@ -180,16 +180,15 @@ class Board:
     # returns the score for a player for the current board;
     # 200 here is supposed to drive the player to a win.
     def get_score(self, player):
-        score = 0
-        score += self.players[player].get_total_manhattan()
-        if self.players[player].player_wins():
-            score -= 200
-        for other_player in self.players:
-            if self.players[player] != other_player:
-                score -= other_player.get_total_manhattan()
-                if other_player.player_wins():
-                    score += 200
+        score = 1000
+        score -= player.get_total_manhattan()
+        for otherplayer in self.players:
+            if otherplayer != player:
+                #print(otherplayer, player)
+                score -= 1000 - otherplayer.get_total_manhattan()
         return score
+
+
 
     # set self.current_turn to next player
     def next_player(self):
@@ -302,8 +301,8 @@ class Board:
                     if player == self.current_turn:
                         return False
                 else:
-                    return True
                     print("that's not a valid move")
+                    return True
             else:
                 print("you're not that player")
                 return True
@@ -365,8 +364,7 @@ def main_game_loop(halma_board):
     turn = 1
     t0 = time()
     while halma_board.no_winner_yet():
-
-        if False:
+        if True:
             halma_board.print_board()
             print()
             print("turn", turn, halma_board.current_turn.color)
@@ -415,12 +413,12 @@ def ask_new_game():
 
 # ==========================================
 # ----- MONTE CARLO FUNCTIONS ARE HERE -----
-def load_data(name='Database_test.txt'):
+def load_data(name='Database'):
     """Return a dictionary out of the database file."""
     print('Reading the database file...')
     with open(name, "r") as file:
         string = file.read()
-        
+
     print('Loading the contents...')
     data = {}
     i_1 = 3
@@ -468,7 +466,7 @@ def reverse_move(move, board):
     board.make_move(move[i:] + move[:i])
 
 
-def store(name='Database_test.txt'):
+def store(name='Database'):
     """Reset the Database file and write all contents of the dictionary."""
     print("Saving data...")
     with open(name, 'w') as file:
@@ -479,7 +477,7 @@ def store(name='Database_test.txt'):
 
 
 class MCPlayer(Player):
-    data = load_data()
+    #data = load_data()
 
     def __init__(self, i, size, rows):
         Player.__init__(self, i, size, rows)
@@ -575,7 +573,69 @@ class MCPlayer(Player):
         return 0.5 - float(self.get_total_manhattan()) / 10000.0  # Guideline
 
 
-halma_board = Board(2, 10, 5, ['mc', 'mc'])
-for _ in range(10):
-    main_game_loop(halma_board)
-store()
+
+# -------------         -----------------------------------------
+# -------------AlfaBeta -----------------------------------------
+class ABPlayer(Player):
+    def __init__(self, i, size, rows):
+        Player.__init__(self, i, size, rows)
+        self.depth = 4
+
+    def decide_move(self, board):
+        best_move = self.AlphaBeta(board, self.depth, -999999999, 999999999, True)[1]
+        return best_move
+
+
+    # here the maximizing player is the player of the current turn,
+    # since score is, however determined by manhattan distance, the minimum
+    # score is taken instead of the maximum
+    # for the opponent it is the maximum score
+    # thus alpha starts at 999999999 and beta starts at -999999999
+    def AlphaBeta(self, node, depth, alpha, beta, maximizingPlayer):
+        if depth == 0 or self.player_wins():
+            if maximizingPlayer:
+                return [node.get_score(node.current_turn), ""]
+            else:
+                return [node.get_score(node.current_turn) * -1, ""]
+        if maximizingPlayer:
+            print(depth)
+            value = -999999999
+            child = ""
+            for move in node.get_moves_player(node.current_turn):
+                child = cif.to_movestring(move, node.size)
+                node.make_move(child)
+                next_node = deepcopy(node)
+                next_node.next_player()
+                value = max(value, self.AlphaBeta(next_node, depth - 1, alpha, beta, False)[0])
+                alpha = max(alpha, value)
+                reverse_move(child, node)
+                if beta <= alpha:
+                    break
+            return [value, child]
+        else:
+            value = 999999999
+            child = ""
+            for move in node.get_moves_player(node.current_turn):
+                child = cif.to_movestring(move, node.size)
+                node.make_move(child)
+                next_node = deepcopy(node)
+                next_node.next_player()
+                value = min(value, self.AlphaBeta(next_node, depth - 1, alpha, beta, True)[0])
+                beta = min(beta, value)
+                reverse_move(child, node)
+                if beta <= alpha:
+                    break
+            return [value, child]
+
+
+
+
+
+
+halma_board = Board(2, 10, 5, ['ab', 'h'])
+while True:
+    for _ in range(10000):
+        main_game_loop(halma_board)
+    print("store starting")
+    store()
+    print("store = done")
