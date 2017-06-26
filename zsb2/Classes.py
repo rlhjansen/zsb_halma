@@ -162,10 +162,10 @@ class Board:
         for i in range(len(players)):
             if players[i] == 'h':
                 player_list.append(Player(i, size - 1, rows))
-            elif players[i] == 'mc':
-                player_list.append(MCPlayer(i, size - 1, rows))
-            #elif players[i] == 'ab':
-            #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
+        #    elif players[i] == 'mc':
+        #        player_list.append(MCPlayer(i, size - 1, rows))
+            elif players[i] == 'ab':
+                player_list.append(ABPlayer(i, size - 1, rows))
         return player_list
 
     def reset_board(self):
@@ -187,6 +187,8 @@ class Board:
                 #print(otherplayer, player)
                 score -= 1000 - otherplayer.get_total_manhattan()
         return score
+
+
 
     # set self.current_turn to next player
     def next_player(self):
@@ -246,55 +248,85 @@ class Board:
     # returns a list of moves that a piece can make
     def get_moves_piece(self, piece):
         moves_list_piece = []
+        start_x, start_y = piece
         for [dx, dy] in self.direction_list:
-            moves_list_piece.extend(self.scan(piece, dx, dy))
+            moves_list_piece.extend(self.scan(start_x, start_y, dx, dy, set()))
         return moves_list_piece
 
     # returns a list of possible moves when exploring a certain direction
     # only_jumps=True is used when there is a gamepiece in the explored
     # direction that can be jumped over, in that case all possible further jumps
     # are evaluated, return format = [[start_x, start_y], [end_x, end_y]]
-    def scan(self, piece, dx, dy, only_jumps=False):
-        moves_list = []
-        [x, y] = piece
-        new_x = x+dx
-        new_y = y+dy
-        while 0 <= new_x <= self.size and 0 <= new_y <= self.size:
-            piece_on_coord = self.board[x][y]
-            if piece_on_coord != '.':
-                [jump_x, jump_y] = cif.get_jump_loc(x, y, new_x, new_y)
-                if self.on_board(jump_x, jump_y):
-                    if self.check_jump(new_x, new_y, jump_x, jump_y, dx, dy) and \
-                        self.check_free(jump_x, jump_y):
-                        moves_list.append([jump_x, jump_y])
-                        new_piece = [jump_x, jump_y]
-                        for [new_dx, new_dy] in self.direction_list:
-                            temp_move = self.scan(new_piece, new_dx, new_dy, only_jumps=True)
-                            if temp_move != []:
-                                moves_list.append(self.scan(new_piece, new_dx, new_dy, only_jumps=True))
+    def scan(self, start_x, start_y, dx, dy, visited, both=True):
+        try_x = start_x+dx
+        try_y = start_y+dy
+        moves = []
+        jumps = set()
+        visited_set = set()
+        for x in visited:
+            visited_set.add(x)
+        if self.on_board(try_x,try_y):
+            if self.check_free(try_x, try_y):
+                moves.append([(start_x, start_y), (try_x, try_y)])
+        new_x = start_x+dx
+        new_y = start_y+dy
+        jump_x, jump_y = cif.get_jump_loc(start_x,start_y,new_x,new_y)
+        while self.on_board(jump_x, jump_y):
+            if (jump_x, jump_y) not in visited_set:
+                if self.check_free(jump_x, jump_y):
+                    middle_x = (jump_x+start_x)/2
+                    middle_y = (jump_y+start_y)/2
+                    if self.board[middle_x][middle_y] != '.':
+                        if self.check_inbetween(start_x, start_y, middle_x, middle_y, jump_x, jump_y, dx, dy):
+                            jumps.add((jump_x, jump_y))
+                            visited_set.add((jump_x, jump_y))
+                            if both:
+                                colour = self.board[start_x][start_y]
+                                self.board[start_x][start_y] = '.'
+                            for newdx, newdy in self.direction_list:
+                                jumps |= self.scan(jump_x, jump_y, newdx, newdy, visited_set, both=False)
+                            if both:
+                                self.board[start_x][start_y] = colour
+            else:
                 break
             new_x += dx
             new_y += dy
-        if not only_jumps:
-            if self.on_board(x+dx, y+dy):
-                if self.check_free(x+dx, y+dy):
-                    moves_list.append([x+dx, y+dy])
-            real_moves = [[[x, y], end_loc] for end_loc in moves_list]
+            jump_x, jump_y = cif.get_jump_loc(start_x, start_y, new_x, new_y)
+        if both:
+            for jump in jumps:
+                moves.append([(start_x,start_y), jump])
+            return moves
         else:
-            real_moves = moves_list
-        return real_moves
+            return jumps
+
+    def check_inbetween(self, start_x, start_y, middle_x, middle_y, jump_x, jump_y,
+                        dx, dy):
+        while True:
+            start_x += dx
+            start_y += dy
+            if self.board[start_x][start_y] != '.':
+                if start_x == middle_x and start_y == middle_y:
+                    pass
+                else:
+                    return False
+            if start_x == jump_x and start_y == jump_y:
+                return True
+
 
     # checks if there's a piece on the start position mentioned
     # checks if the move is in the list of that players possible moves
     def check_not_legal(self, move):
         movelist = cif.to_coordinates(move, self.size)
         x, y = movelist[0][0], movelist[0][1]
+        print(x, y)
         if self.board[x][y] == '.':
             print("there is no piece on that position")
             return True
         else:
             player = self.color_player_dict[self.board[x][y]]
             if player == self.current_turn:
+                print(movelist)
+                print(self.get_moves_piece([x,y]))
                 if movelist in self.get_moves_piece([x,y]):
                     if player == self.current_turn:
                         return False
@@ -362,19 +394,20 @@ def main_game_loop(halma_board):
     turn = 1
     t0 = time()
     while halma_board.no_winner_yet():
-
-        if False:
+        if True:
             halma_board.print_board()
             print()
             print("turn", turn, halma_board.current_turn.color)
             print(halma_board.current_turn.get_total_manhattan())
 
         not_legal = True
-        move = ''
         while not_legal:
             move = halma_board.current_turn.decide_move(halma_board)
             if move == 'check moves':
-                print([x for x in cif.to_movestrings(halma_board.get_moves_player(halma_board.current_turn), halma_board.size)])
+                moves = halma_board.get_moves_player(halma_board.current_turn)
+                for move in moves:
+                    print(cif.to_movestring(move, halma_board.size))
+                print(len(moves))
             elif move == 'manhattan':
                 print(halma_board.current_turn.get_total_manhattan())
             elif move == 'goalmanhattan':
@@ -392,12 +425,10 @@ def main_game_loop(halma_board):
 
     winner = halma_board.who_won()
     t1 = time()
-
-    if False:
-        print("Congratulations!,", winner, "has won!")
-        print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
-        print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
-        print()
+    print("Congratulations!,", winner, "has won!")
+    print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
+    print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
+    print()
     halma_board.reset_board()
 
 
@@ -415,7 +446,7 @@ def ask_new_game():
 
 # ==========================================
 # ----- MONTE CARLO FUNCTIONS ARE HERE -----
-def load_data(name='Database_test.txt'):
+def load_data(name='Database'):
     """Return a dictionary out of the database file."""
     print('Reading the database file...')
     with open(name, "r") as file:
@@ -468,7 +499,7 @@ def reverse_move(move, board):
     board.make_move(move[i:] + move[:i])
 
 
-def store(name='Database_test.txt'):
+def store(name='Database'):
     """Reset the Database file and write all contents of the dictionary."""
     print("Saving data...")
     with open(name, 'w') as file:
@@ -476,11 +507,10 @@ def store(name='Database_test.txt'):
         for key in MCPlayer.data.keys():
             value = MCPlayer.data[key]
             file.write('"""' + str(key) + '"""' + ': ' + str(value) + ',\n')
-    print('Done. Saved', len(MCPlayer.data.keys()), 'states.')
 
 
 class MCPlayer(Player):
-    data = load_data()
+    #data = load_data()
 
     def __init__(self, i, size, rows):
         Player.__init__(self, i, size, rows)
@@ -618,12 +648,10 @@ class ABPlayer(Player):
         else:
             value = 999999999
             child = ""
-            for move in node.get_moves_player(node.current_turn):
+            for move in node.get_moves_player(node.players[1]):
                 child = cif.to_movestring(move, node.size)
                 node.make_move(child)
-                next_node = deepcopy(node)
-                next_node.next_player()
-                value = min(value, self.AlphaBeta(next_node, depth - 1, alpha, beta, True)[0])
+                value = min(value, self.AlphaBeta(node, depth - 1, alpha, beta, True)[0])
                 beta = min(beta, value)
                 reverse_move(child, node)
                 if beta <= alpha:
@@ -631,8 +659,14 @@ class ABPlayer(Player):
             return [value, child]
 
 
-halma_board = Board(2, 10, 5, ['mc', 'mc'])
+
+
+
+
+halma_board = Board(2, 10, 5, ['h', 'h'])
 while True:
-    for _ in range(10):
+    for _ in range(10000):
         main_game_loop(halma_board)
+    print("store starting")
     store()
+    print("store = done")
