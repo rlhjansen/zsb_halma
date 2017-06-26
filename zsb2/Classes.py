@@ -388,15 +388,15 @@ def main_game_loop(halma_board):
         turn += 1
         halma_board.next_player()
 
-    new_states = 0
+    states = 0
     for player in halma_board.players:
-        new_states += player.results(player.player_wins())
-    print(new_states * 100 / turn, 'percentage of states were re-used')
+        states += player.results(player.player_wins())
 
     winner = halma_board.who_won()
     t1 = time()
     print("Congratulations!,", winner, "has won!")
     print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
+    print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
     print()
     halma_board.reset_board()
 
@@ -415,11 +415,47 @@ def ask_new_game():
 
 # ==========================================
 # ----- MONTE CARLO FUNCTIONS ARE HERE -----
-def load_data(name='Database'):
+def load_data(name='Database_test.txt'):
     """Return a dictionary out of the database file."""
-    print('Loading the database...')
+    print('Reading the database file...')
     with open(name, "r") as file:
-        return eval("{" + file.read() + "}")
+        string = file.read()
+        
+    print('Loading the contents...')
+    data = {}
+    i_1 = 3
+    i_2 = 3
+    count = 0
+    while i_2 < len(string):
+        char = ''
+
+        while char != '"':
+            i_2 += 1
+            char = string[i_2]
+        key = string[i_1:i_2]
+
+        i_2 += 6
+        i_1 = i_2
+        while char != ',':
+            i_2 += 1
+            char = string[i_2]
+        win = int(string[i_1:i_2])
+
+        i_2 += 2
+        i_1 = i_2
+        while char != ']':
+            i_2 += 1
+            char = string[i_2]
+        total = int(string[i_1: i_2])
+
+        i_2 += 6
+        i_1 = i_2
+        count += 1
+        data[key] = [win, total]
+
+    print('Loaded', count, 'states.')
+    print()
+    return data
 
 
 def reverse_move(move, board):
@@ -432,7 +468,7 @@ def reverse_move(move, board):
     board.make_move(move[i:] + move[:i])
 
 
-def store(name='Database'):
+def store(name='Database_test.txt'):
     """Reset the Database file and write all contents of the dictionary."""
     print("Saving data...")
     with open(name, 'w') as file:
@@ -513,10 +549,13 @@ class MCPlayer(Player):
     def results(self, win):
         """Update all used board states."""
         new_states = 0
+        old_states = 0
         for key in self.path:
             if key not in MCPlayer.data:
                 MCPlayer.data[key] = [0, 0]
                 new_states += 1
+            else:
+                old_states += 1
 
             value = MCPlayer.data[key]
             if win:
@@ -524,7 +563,7 @@ class MCPlayer(Player):
             value[1] += 1
 
         self.path = set()
-        return new_states
+        return float(old_states) / float(new_states + old_states)
 
     def get_win(self, key):
         """Return the win-percentage of a board setting."""
@@ -537,6 +576,6 @@ class MCPlayer(Player):
 
 
 halma_board = Board(2, 10, 5, ['mc', 'mc'])
-for _ in range(100):
+for _ in range(10):
     main_game_loop(halma_board)
 store()
