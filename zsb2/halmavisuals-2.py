@@ -1,38 +1,33 @@
-"""from __future__ import division, print_function
-from visual import *
-from visual.graph import *
-from visual.controls import *
+# Done:
+# The board and the pieces all appear on the screen. 
+# You can pick up a piece by clicking on it. 
+# You can release the piece in another position by clicking on that position.
+# After the piece is released, it should be moved to the exact center of a square.
+# TO DO:
+# The piece should only move if it's a legal move, if not, the piece should be sent 
+# back to its original position.
+# Connect to the actual game.
+# Write a function that makes it possible for the computer to move pieces.
+# If there's time, make the game more user-friendly (start-buttons etc.)
 
-
-"""
 from __future__ import division, print_function
 from visual import *
 from visual.graph import *
 from visual.controls import *
-import wx
-from copy import deepcopy
-# from umi_common import *
-# Custom made imports
-# from umi_parameters import UMI_parameters
-# from umi_chessboard import UMI_chessboard
-# from umi_student_functions import *
-import numpy as np
-import os.path
-from random import uniform, randint
+#import wx
+#from copy import deepcopy
+#import numpy as np
+#import os.path
+#from random import uniform, randint
 
 
-# Returns notation [a1-h8] from coordinates
+# Returns notation [a1-p16] from coordinates
 def to_coordinate(notation):
-    """ Given a notation in the form [a1-h8], return the corresponding notation
-        (0-7, 0-7)
-        :param str notation: Location of a field on the board
-
-        :return: Tuple internal coordinates of the field.
-    """
     z = ord(notation[0]) - ord('a')
     x = int(notation[1]) - 1
     return (x, z)
 
+# Returns coordinates from notation [a1-p16]
 def to_notation(coordinates):
     (x, z) = coordinates
     x += 7
@@ -40,11 +35,6 @@ def to_notation(coordinates):
     letter = chr(ord('a') + z)
     number = x + 1
     return letter + str(number)
-
-def to_move(begin_position, end_position):
-    move = ""
-    move = move + begin_position + end_position
-    return move
 
 class UMI_chessboard:
     def __init__(self, frameworld, board_size=0.5, position_x_z=(0, 0)):
@@ -86,12 +76,12 @@ class UMI_chessboard:
         # Add the pieces
         self.add_pieces()
 
+        # Pieces are able to move
         self.move_events()
 
-# Generation of the checkerboard
+# Generates the board in 3-D
     def generate_board(self):
-        ''' Generates the visual display of the chessboard.
-        '''
+        # Draw the white squares
         self.mchessboard = box(frame=self.framemp,
                                height=self.mplhght,
                                length=self.chessboard_size,
@@ -99,7 +89,7 @@ class UMI_chessboard:
                                pos=(0.5 * self.chessboard_size, -0.5 * self.mplhght, 0.5 * self.chessboard_size),
                                color=self.board_color_light)
 
-        # Draw the beams to create 64 squares
+        # Draw the beams to create 256 squares
         self.width_beams = []
         self.vert_beams = []
         for field in range(16):
@@ -136,7 +126,7 @@ class UMI_chessboard:
                                         self.chessboard_size - (0.5 * self.wallthck)),
                                    color=self.beam_color)
                                )
-
+        # Fill in the black squares
         self.fields = []
         for x in range(16):
             for z in range(16):
@@ -150,30 +140,79 @@ class UMI_chessboard:
                                            color=self.board_color_dark)
                                        )
 
-    def move(self):
-        # for piece in self.pieces:
-        pick = None  # no object picked out of the scene yet
-        switch = True
-        while True:
-            #rate(10)
-            if scene.mouse.events:
-                m1 = scene.mouse.getevent()  # get event
-                if m1.press and m1.pick == piece and switch:  # if touched
-                    drag_pos = m1.pickpos  # where on the ball
-                    pick = m1.pick  # pick now true (not None)
-                    switch = False
-                elif m1.press and not switch:  # released at end of drag
-                    switch = True
-                    pick = None  # end dragging (None is false)
-            if pick:
-                closest = lambda s, d: s[0] - d[0]
-                match = min(pieces, key=lambda p: closest(p, (piece.x, piece.y, piece.z)))
-                new_pos = vector(match)
-                if new_pos != drag_pos:
-                    pick.pos = new_pos
-                    drag_pos = new_pos
+                    
+    # Is used to convert the position of the mouse into a valid position on the board
+    # (i.e. in the exact center of a square)
+    def real_world_location(self, x, z):
+        # 7.5 is added so the coordinates start at 0
+        x+=7.5
+        z+=7.5
+        
+        # Any position within one square is set to the exact center of that square
+        for a in range (17):
+            
+            if x < a and x > a-1:
+                x = a - 0.5
+                
+            if z < a and z > a-1:
+                z = a -0.5
+        return (x,z)
+    
 
-    def red_player(self, x, z):
+    # Currently doing: sets the piece that the player has picked up on its new position.
+    # Should be doing: check if this is a legal move, if so it should be moved to its 
+    # new position. If not, the piece should stay on its original position.
+    def move_piece(self, begin_location, end_location, obj):
+        (x, z) = begin_location
+        (x1, z1) = end_location
+        #print((x,z))
+        #print((x1, z1))
+        y = 0.1 + 0.5 *self.wallhght
+        y1 = y # y is always the same, just above the board
+        # Will be used for legal moves later
+        x_start = x-0.5
+        z_start = z-0.5      
+        x_end = x1-0.5 
+        z_end = z1-0.5
+        
+        # Rough idea for incorporating legal moves: !!!
+        # if [[x_start, z_start], [x_end, z_end]] in legal moves:
+        #   obj.pos = (x1, y1, z1) # new position
+        # else:
+        #   obj.pos = (x, y, z) # back to original position
+        
+        # only if the player has picked up a piece
+        if isinstance(obj, cylinder): 
+            obj.pos = (x1, y1, z1) # set to the new position
+            
+        return [[x_start, z_start], [x_end, z_end]]
+
+
+    # Checks which object the player has clicked on
+    def move_events(self):
+        piece = False
+        
+        while True:
+            rate(100)
+            mouse_event = scene.mouse.getevent()
+
+            if mouse_event.press and piece == False:
+                (x, y, z) = mouse_event.pickpos # retrieve position of the mouse
+                obj = mouse_event.pick # object that the player has clicked on is retrieved
+                begin_location = self.real_world_location(x,z) 
+                piece = True
+                
+            elif mouse_event.press and piece == True:
+                (x, y, z) = mouse_event.pickpos # retrieve position of the mouse
+                end_location = self.real_world_location(x, z)
+                piece = False # piece is released
+                self.move_piece(begin_location, end_location, obj) # moves the piece
+        return
+
+
+
+    # Makes the pieces in the different colors in their corresponding starting positions.
+    def red_player(self, x, z): 
         color_c = self.first_player_color
         color_n = "Red"
         piece = cylinder(frame=self.framemp,
@@ -219,174 +258,56 @@ class UMI_chessboard:
                               (self.field_size * z) + self.field_size / 2),
                          color=color_c)
         self.pieces[to_notation((x, z))] = [piece, color_n]
-        # print(to_notation((x, z)))
         return
 
-    def get_piece(self, location):
-        print("try to get the piece")
-        print(location)
-
-    def real_world_location(self, x, z):
-        x+=7.5
-        z+=7.5
-        for a in range (17):
-            if x < a and x > a-1:
-                x = a - 0.5
-            if z < a and z > a-1:
-                z = a -0.5
-        return (x,z)
-
-    def move_piece(self, begin_location, end_location, obj):
-        (x, z) = begin_location
-        print((x,z))
-        x_start = x-0.5
-        y_start = z-0.5
-        (x1, z1) = end_location
-        print((x1, z1))
-        x_end = x1-0.5 
-        y_end = z1-0.5
-        y = 0.1 + 0.5 *self.wallhght
-        y1 = y
-        if isinstance(obj, cylinder):
-            obj.pos = (x1, y1, z1)
-        return [[x_start, y_start], [x_end, y_end]]
-
-
-    def move_events(self):
-        piece = False
-        while True:
-            rate(10)
-            mouse_event = scene.mouse.getevent()
-
-            if mouse_event.press and piece == False:
-                self.get_piece(mouse_event.pickpos)
-                (x, y, z) = mouse_event.pickpos
-                obj= mouse_event.pick
-                print(obj)
-                begin_location = self.real_world_location(x,z)
-                #print((int(x+7.5), int(z+7.5)))
-                #print(begin_location)
-                piece = True
-                print(piece)
-            elif mouse_event.press and piece == True:
-                self.get_piece(mouse_event.pickpos)
-                (x, y, z) = mouse_event.pickpos
-                end_location = self.real_world_location(x, z)
-                #print(end_location)
-                piece = False
-                #move = to_move(begin_location, end_location)
-                #print(move)
-                self.move_piece(begin_location, end_location, obj)
-
-                #mouse_event.pos = (x,y,z)
-        return
-
-
-                # m1 = scene.mouse.getevent()  # get event
-                # if m1.press and m1.pick == piece and switch:  # if touched
-                #     drag_pos = m1.pickpos  # where on the ball
-                #     pick = m1.pick  # pick now true (not None)
-                #     print(pick.pos)
-                #     switch = False
-                # elif m1.press and not switch:  # released at end of drag
-                #     # m1.release = 'left'
-                #     switch = True
-                #     pick = None  # end dragging (None is false)
-
-            # if pick:
-            #     new_pos = scene.mouse.pickpos
-            #     piecest = [(3, 0.2, 3), (4, 0.2, 3), (3, 0.2, 5)]
-            #     closest = lambda s, d: s[0] - d[0]
-            #     match = min(piecest, key=lambda p: closest(p, (pick.pos)))
-            #     ne_pos = vector(match)
-            #     if new_pos != drag_pos:  # if mouse has moved
-            #         pick.pos += new_pos - drag_pos
-            #         drag_pos = new_pos  # update drag position
-            #         print(pick.pos)
-            #         piecest = [(3, 0.2, 3), (4, 0.2, 3), (3, 0.2, 5)]
-            #         closest = lambda s, d: s[0] - d[0]
-            #         match = min(piecest, key=lambda p: closest(p, (pick.pos)))
-
-
-        return
-
+    
+    # Puts the pieces on the chessboard in their start position.
     def add_pieces(self):
-        '''
-        Adds and registers the pieces on the chessboard.
-        '''
         self.pieces = dict()
         rows = 5
         size = 15
         pieces = []
-        for z in range(0, 5):
+        
+        # Upper-left corner
+        for z in range(rows):
             for x in [0, 1, 2, 3, 4]:
                 if (x + z) < rows:
-                    # color_c = self.first_player_color
-                    # color_n = "Red"
-                    # self.red_player(x,z)
-                    color_c = self.first_player_color
-                    color_n = "Red"
-                    piece = cylinder(frame=self.framemp,
-                                     axis=(0, self.pieces_height, 0),
-                                     radius=self.field_size * 0.35,
-                                     pos=(self.field_size * (x + 1) - self.field_size / 2.0, 0.1 + 0.5 * self.wallhght,
-                                          (self.field_size * z) + self.field_size / 2),
-                                     color=color_c)
-                    self.pieces[to_notation((4 - x, 4 - z))] = [piece, color_n]
-
-                    #                    self.pieces[to_notation((4-x, 4-z))] = [piece, color_n]
-                    #                    pieces.append(piece.pos)
-                    #                    print(pieces)
-                    #                    self.move()
-                    #                    move(pieces, piece)
-                    #                    scene.range = 3 # fixed size, no autoscaling
-                    #                    ball = sphere(pos=(-3,0,0), color=color.cyan)
-                    #                    cube = box(pos=(+3,0,0), size=(2,2,2), color=color.red)
-                    #                    for i in pieces:
-                    #                    for piece in self.pieces:
-                    pick = None  # no object picked out of the scene yet
-                    switch = True
+                    self.red_player(x,z)
+                    
         x_range = [size - x for x in range(rows)]
         z_range = [size - z for z in range(rows)]
+        
+        # Lower-right corner
         for x in x_range:
             for z in z_range:
                 if 2 * size - rows < x + z:
                     self.blue_player(x, z)
-                    # pieces.append(piece.pos)
-                    # piecepos=piece.pos
-                    # piece.pos.move()
-
+                    
+        # Upper-right corner
         for x in x_range:
             for z in range(rows):
                 if size - rows < x - z:
                     self.green_player(x, z)
-
+                    
+        # Lower-left corner
         for x in range(rows):
             for z in z_range:
                 if size - rows < z - x:
                     self.yellow_player(x, z)
-                    # pieces.append(piece)
         return pieces
-        # print(pieces)
-
-        # print(pos)
-        # print(self.pieces)
 
 
-# return of action of the mouse
 
+# Settings of the display
 scene.width = 800
 scene.height = 800
-scene.title = "3D TicTacToe: 4 in a row"
-# scene.center=(8,-8, 0)
-# scene.center=(-.5,-.5, 0)
+scene.title = "Halma"
 scene.forward = (0, -0.000001, 0)
-# scene.autoscale=5
 
 frameworld = frame()
-# print(frameworld)
+# Prints the board
 CHESSBOARD = UMI_chessboard(frameworld, 16, (-8, 8))
-# alle locations in een lijst en beweegbaar maken
+
 
 
 
