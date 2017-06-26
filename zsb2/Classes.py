@@ -162,10 +162,10 @@ class Board:
         for i in range(len(players)):
             if players[i] == 'h':
                 player_list.append(Player(i, size - 1, rows))
-        #    elif players[i] == 'mc':
-        #        player_list.append(MCPlayer(i, size - 1, rows))
-            elif players[i] == 'ab':
-                player_list.append(ABPlayer(i, size - 1, rows))
+            elif players[i] == 'mc':
+                player_list.append(MCPlayer(i, size - 1, rows))
+            #elif players[i] == 'ab':
+            #    self.players.append(AlfaBetaPlayer(i, size - 1, rows))
         return player_list
 
     def reset_board(self):
@@ -187,8 +187,6 @@ class Board:
                 #print(otherplayer, player)
                 score -= 1000 - otherplayer.get_total_manhattan()
         return score
-
-
 
     # set self.current_turn to next player
     def next_player(self):
@@ -364,13 +362,15 @@ def main_game_loop(halma_board):
     turn = 1
     t0 = time()
     while halma_board.no_winner_yet():
-        if True:
+
+        if False:
             halma_board.print_board()
             print()
             print("turn", turn, halma_board.current_turn.color)
             print(halma_board.current_turn.get_total_manhattan())
 
         not_legal = True
+        move = ''
         while not_legal:
             move = halma_board.current_turn.decide_move(halma_board)
             if move == 'check moves':
@@ -392,10 +392,12 @@ def main_game_loop(halma_board):
 
     winner = halma_board.who_won()
     t1 = time()
-    print("Congratulations!,", winner, "has won!")
-    print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
-    print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
-    print()
+
+    if False:
+        print("Congratulations!,", winner, "has won!")
+        print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
+        print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
+        print()
     halma_board.reset_board()
 
 
@@ -413,7 +415,7 @@ def ask_new_game():
 
 # ==========================================
 # ----- MONTE CARLO FUNCTIONS ARE HERE -----
-def load_data(name='Database'):
+def load_data(name='Database_test.txt'):
     """Return a dictionary out of the database file."""
     print('Reading the database file...')
     with open(name, "r") as file:
@@ -466,7 +468,7 @@ def reverse_move(move, board):
     board.make_move(move[i:] + move[:i])
 
 
-def store(name='Database'):
+def store(name='Database_test.txt'):
     """Reset the Database file and write all contents of the dictionary."""
     print("Saving data...")
     with open(name, 'w') as file:
@@ -474,10 +476,11 @@ def store(name='Database'):
         for key in MCPlayer.data.keys():
             value = MCPlayer.data[key]
             file.write('"""' + str(key) + '"""' + ': ' + str(value) + ',\n')
+    print('Done. Saved', len(MCPlayer.data.keys()), 'states.')
 
 
 class MCPlayer(Player):
-    #data = load_data()
+    data = load_data()
 
     def __init__(self, i, size, rows):
         Player.__init__(self, i, size, rows)
@@ -628,14 +631,8 @@ class ABPlayer(Player):
             return [value, child]
 
 
-
-
-
-
-halma_board = Board(2, 10, 5, ['ab', 'h'])
+halma_board = Board(2, 10, 5, ['mc', 'mc'])
 while True:
-    for _ in range(10000):
+    for _ in range(10):
         main_game_loop(halma_board)
-    print("store starting")
     store()
-    print("store = done")

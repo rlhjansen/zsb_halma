@@ -13,3 +13,6 @@
       s'nachts. Dus morgen wordt minder happy.
       Ik heb vervolgens later op de dag gezeten aan het optimaliseren van het geheugengebruik van de Database en het
       implementeren van een rand_move functie binnen decision_move
+26/6: Er is een database gemaakt over het hele weekend. De database heeft moeite met inladen, dat probeer ik vandaag te
+      fixen. Daarnaast heb ik nog wat zitten klooien aan het representeren van de database en hoeveel % van de staten
+      nieuw zijn gevonden in een bepaalde run. Het laden is gefixt! yay!
