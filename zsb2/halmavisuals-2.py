@@ -241,10 +241,10 @@ class UMI_chessboard:
         print((x,z))
         x_start = x-0.5
         y_start = z-0.5
-        x_end = x1-0.5 
-        y_end = z1-0.5
         (x1, z1) = end_location
         print((x1, z1))
+        x_end = x1-0.5 
+        y_end = z1-0.5
         y = 0.1 + 0.5 *self.wallhght
         y1 = y
         if isinstance(obj, cylinder):
