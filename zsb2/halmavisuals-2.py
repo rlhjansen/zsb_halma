@@ -184,6 +184,8 @@ class UMI_chessboard:
         # only if the player has picked up a piece
         if isinstance(obj, cylinder): 
             obj.pos = (x1, y1, z1) # set to the new position
+        else:
+            pass
             
         return [[x_start, z_start], [x_end, z_end]]
 
