@@ -165,17 +165,24 @@ class Board:
             for [x,y] in player.get_pieces():
                 self.board[x][y] = player.get_color()
         self.current_turn = self.players[0]
+        self.test_run = self.only_mc_players()
 
     def init_players(self, players, size, rows):
         player_list = []
         for i in range(len(players)):
             if players[i] == 'h':
                 player_list.append(Player(i, size - 1, rows, 'h'))
-        #    elif players[i] == 'mc':
-        #        player_list.append(MCPlayer(i, size - 1, rows, 'mc'))
+            elif players[i] == 'mc':
+                player_list.append(MCPlayer(i, size - 1, rows, 'mc'))
             elif players[i] == 'ab':
                 player_list.append(ABPlayer(i, size - 1, rows, 'ab'))
         return player_list
+
+    def only_mc_players(self):
+        for player in self.players:
+            if player.type != 'mc':
+                return False
+        return True
 
     def reset_board(self):
         for pl in self.players:
@@ -186,18 +193,13 @@ class Board:
                 self.board[x][y] = player.get_color()
         self.current_turn = self.players[0]
 
-    # returns the score for a player for the current board;
-    # 200 here is supposed to drive the player to a win.
-    def get_score(self, player):
-        score = 1000
-        score -= player.get_total_manhattan()
-        for otherplayer in self.players:
-            if otherplayer != player:
-                #print(otherplayer, player)
-                score -= 1000 - otherplayer.get_total_manhattan()
+    # returns the value of the board. Red favours a higher score, blue a lower.
+    def get_score(self):
+        red = self.players[0]
+        blue = self.players[1]
+        score = red.get_total_manhattan()
+        score -= blue.get_total_manhattan()
         return score
-
-
 
     # set self.current_turn to next player
     def next_player(self):
@@ -207,6 +209,14 @@ class Board:
                 break
             else:
                 self.current_turn = self.players[0]
+
+    # Return the player that will have the turn after the given player.
+    def get_next_player(self, player):
+        index = self.players.index(player) + 1
+
+        if index == len(self.players):
+            return self.players[0]
+        return self.players[index]
 
     # returns a dictionary that returns a player object, with color input
     def make_player_dictionary(self, number_of_players):
@@ -267,7 +277,6 @@ class Board:
     # direction that can be jumped over, in that case all possible further jumps
     # are evaluated, return format = [[start_x, start_y], [end_x, end_y]]
     def scan(self, start_x, start_y, dx, dy, visited, both=True):
-        print(dx, dy)
         try_x = start_x+dx
         try_y = start_y+dy
         moves = []
@@ -322,7 +331,6 @@ class Board:
             if start_x == jump_x and start_y == jump_y:
                 return True
 
-
     # checks if there's a piece on the start position mentioned
     # checks if the move is in the list of that players possible moves
     def check_not_legal(self, move):
@@ -340,7 +348,7 @@ class Board:
             player = self.color_player_dict[self.board[x][y]]
             if player == self.current_turn:
                 #print(movelist)
-                print(self.get_moves_piece([x,y]))
+                #print(self.get_moves_piece([x,y]))
                 if movelist in self.get_moves_piece([x,y]):
                     if player == self.current_turn:
                         return False
@@ -376,7 +384,20 @@ class Board:
 
     # prints the current board
     def print_board(self):
-        for row in self.board:
+        board = deepcopy(self.board)
+        i = 0
+        for row in board:
+            row.append(chr(ord('A') + i))
+            i += 1
+
+        first_row = []
+        x = i
+        while x > 0:
+            first_row.append(str(x))
+            x -= 1
+        print_board = [first_row] + board
+
+        for row in print_board:
             print(row)
 
     # returns a copy of the board
@@ -408,11 +429,10 @@ def main_game_loop(halma_board):
     turn = 1
     t0 = time()
     while halma_board.no_winner_yet():
-        if True:
+        if not halma_board.test_run:
             halma_board.print_board()
             print()
             print("turn", turn, halma_board.current_turn.color)
-            print(halma_board.current_turn.get_total_manhattan())
 
         not_legal = True
         while not_legal:
@@ -420,8 +440,10 @@ def main_game_loop(halma_board):
             if move == 'check moves':
                 moves = halma_board.get_moves_player(halma_board.current_turn)
                 for move in moves:
-                    print(cif.to_movestring(move, halma_board.size))
-                print(len(moves))
+                    score = ABPlayer.alpha_beta(halma_board.current_turn,
+                                                halma_board, 99999, -99999, 3)
+                    print(cif.to_movestring(move, halma_board.size), score)
+                print('There are', len(moves), 'possible moves.')
             elif move == 'manhattan':
                 print(halma_board.current_turn.get_total_manhattan())
             elif move == 'goalmanhattan':
@@ -439,10 +461,13 @@ def main_game_loop(halma_board):
 
     winner = halma_board.who_won()
     t1 = time()
-    print("Congratulations!,", winner, "has won!")
-    print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
-    print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
-    print()
+    if not halma_board.test_run:
+        print("Congratulations!,", winner, "has won!")
+        print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
+        print()
+    elif randint(0, 999) == 1 and halma_board.test_run:
+        print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
+
     halma_board.reset_board()
 
 
@@ -460,7 +485,7 @@ def ask_new_game():
 
 # ==========================================
 # ----- MONTE CARLO FUNCTIONS ARE HERE -----
-def load_data(name='Database'):
+def load_data(name='Database.txt'):
     """Return a dictionary out of the database file."""
     print('Reading the database file...')
     with open(name, "r") as file:
@@ -504,7 +529,8 @@ def load_data(name='Database'):
 
 
 def reverse_move(move, board):
-    """Return a move that negates the input move."""
+    """Return a move that negates the input move. This is used instead of
+    deepcopying the board."""
     i = 1
     for char in move[1:]:
         if char.isalpha():
@@ -513,7 +539,7 @@ def reverse_move(move, board):
     board.make_move(move[i:] + move[:i])
 
 
-def store(name='Database'):
+def store(name='Database.txt'):
     """Reset the Database file and write all contents of the dictionary."""
     print("Saving data...")
     with open(name, 'w') as file:
@@ -521,14 +547,41 @@ def store(name='Database'):
         for key in MCPlayer.data.keys():
             value = MCPlayer.data[key]
             file.write('"""' + str(key) + '"""' + ': ' + str(value) + ',\n')
+    print("Done, stored", len(MCPlayer.data.keys()), "states.")
 
 
 class MCPlayer(Player):
-    #data = load_data()
+    data = None
 
     def __init__(self, i, size, rows, type):
         Player.__init__(self, i, size, rows, type)
         self.path = set()
+
+        if MCPlayer.data == None:
+            MCPlayer.data = load_data()
+
+    def best_move(self, board):
+        """Return the move that will result in a board with the highest
+        win rate."""
+        best_score = -1
+        best_move = ""
+        best_key = ''
+        for move_int in board.get_moves_player(self):
+            move = cif.to_movestring(move_int, board.size)
+            board.make_move(move)
+            key = self.board_to_key(board)
+            score = self.get_win(key)
+
+            if score > best_score and key not in self.path:
+                best_score = score
+                best_move = move
+                best_key = key
+
+            reverse_move(move, board)
+
+        self.path.add(best_key)
+        print(MCPlayer.data[best_key], best_key)
+        return best_move
 
     def board_to_key(self, board):
         """Convert the board to a key that the dictionary can use."""
@@ -555,6 +608,15 @@ class MCPlayer(Player):
             return self.rand_move(board)
         return self.best_move(board)
 
+    def get_win(self, key):
+        """Return the win-percentage of a board setting."""
+        value = MCPlayer.data.get(key)
+        if value:
+            if value[1] == 0:
+                return 99  # This is never supposed to be best move.
+            return float(value[0]) / float(value[1])  # wins / total
+        return 0.5 - float(self.get_total_manhattan()) / 10000.0  # Guideline
+
     def rand_move(self, board):
         moves = board.get_moves_player(self)
         move = None
@@ -568,28 +630,6 @@ class MCPlayer(Player):
             reverse_move(move, board)
 
         return move
-
-    def best_move(self, board):
-        """Return the move that will result in a board with the highest
-        win rate."""
-        best_score = -1
-        best_move = ""
-        best_key = ''
-        for num_move in board.get_moves_player(self):
-            move = cif.to_movestring(num_move, board.size)
-            board.make_move(move)
-            key = self.board_to_key(board)
-            score = self.get_win(key)
-
-            if score > best_score and key not in self.path:
-                best_score = score
-                best_move = move
-                best_key = key
-
-            reverse_move(move, board)
-
-        self.path.add(best_key)
-        return best_move
 
     def results(self, win):
         """Update all used board states."""
@@ -610,16 +650,6 @@ class MCPlayer(Player):
         self.path = set()
         return float(old_states) / float(new_states + old_states)
 
-    def get_win(self, key):
-        """Return the win-percentage of a board setting."""
-        value = MCPlayer.data.get(key)
-        if value:
-            if value[1] == 0:
-                return 99  # This is never supposed to be best move.
-            return float(value[0]) / float(value[1])  # wins / total
-        return 0.5 - float(self.get_total_manhattan()) / 10000.0  # Guideline
-
-
 
 # -------------         -----------------------------------------
 # -------------AlfaBeta -----------------------------------------
@@ -629,60 +659,68 @@ class ABPlayer(Player):
         self.depth = 4
 
     def decide_move(self, board):
-        best_move = self.AlphaBeta(board, self.depth, -999999999, 999999999, True)[1]
+        """Returns the move that is best according to the Alpha Beta function"""
+        best_move = ''
+        best_score = 99999
+        if self.color == 'r':
+            best_score = -99999
+        enemy = board.get_next_player(self)
+
+        red = -99999
+        blue = 99999
+
+        for move_int in board.get_moves_player(self):
+            move = cif.to_movestring(move_int, board.size)
+            board.make_move(move)
+            score = ABPlayer.alpha_beta(enemy, board, red, blue,
+                                        self.depth - 1)
+
+            if self.color == 'r' and score > best_score:
+                best_move = move
+                best_score = score
+            elif self.color == 'b' and score < best_score:
+                best_move = move
+                best_score = score
+
+            reverse_move(move, board)
+
         return best_move
 
+    @staticmethod
+    def alpha_beta(player, board, red, blue, depth):
+        """Return the score that is least harmful for the given move."""
+        if depth == 0 or not board.no_winner_yet():
+            return board.get_score()
 
-    # here the maximizing player is the player of the current turn,
-    # since score is, however determined by manhattan distance, the minimum
-    # score is taken instead of the maximum
-    # for the opponent it is the maximum score
-    # thus alpha starts at 999999999 and beta starts at -999999999
-    def AlphaBeta(self, node, depth, alpha, beta, maximizingPlayer):
-        if depth == 0 or self.player_wins():
-            if maximizingPlayer:
-                return [node.get_score(node.current_turn), ""]
-            else:
-                return [node.get_score(node.current_turn) * -1, ""]
-        if maximizingPlayer:
-            print(depth)
-            value = -999999999
-            child = ""
-            for move in node.get_moves_player(node.current_turn):
-                child = cif.to_movestring(move, node.size)
-                node.make_move(child)
-                next_node = deepcopy(node)
-                next_node.next_player()
-                value = max(value, self.AlphaBeta(next_node, depth - 1, alpha, beta, False)[0])
-                alpha = max(alpha, value)
-                reverse_move(child, node)
-                if beta <= alpha:
-                    break
-            return [value, child]
-        else:
-            value = 999999999
-            child = ""
-            for move in node.get_moves_player(node.players[1]):
-                child = cif.to_movestring(move, node.size)
-                node.make_move(child)
-                value = min(value, self.AlphaBeta(node, depth - 1, alpha, beta, True)[0])
-                beta = min(beta, value)
-                reverse_move(child, node)
-                if beta <= alpha:
-                    break
-            return [value, child]
+        best_score = red
+        enemy = board.get_next_player(player)
+        if player.color == 'b':
+            best_score = blue
+
+        for move_int in board.get_moves_player(player):
+            move = cif.to_movestring(move_int, board.size)
+            board.make_move(move)
+            score = ABPlayer.alpha_beta(enemy, board, red, blue,
+                                        depth - 1)
+            reverse_move(move, board)
+
+            if player.color == 'r' and score > best_score:
+                if score >= blue:
+                    return blue
+                best_score = score
+                red = best_score
+
+            elif player.color == 'b' and score < best_score:
+                if score <= red:
+                    return red
+                best_score = score
+                blue = best_score
+
+        return best_score
 
 
-
-
-
-halma_board = Board(2, 10, 5, ['h', 'h'])
-for player in halma_board.players:
-    player.get_pieces()
-
+halma_board = Board(2, 10, 5, ['ab', 'h'])
 while True:
-    for _ in range(10000):
+    for _ in range(1000):
         main_game_loop(halma_board)
-    print("store starting")
     store()
-    print("store = done")

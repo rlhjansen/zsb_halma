@@ -15,4 +15,7 @@
       implementeren van een rand_move functie binnen decision_move
 26/6: Er is een database gemaakt over het hele weekend. De database heeft moeite met inladen, dat probeer ik vandaag te
       fixen. Daarnaast heb ik nog wat zitten klooien aan het representeren van de database en hoeveel % van de staten
-      nieuw zijn gevonden in een bepaalde run. Het laden is gefixt! yay!
+      nieuw zijn gevonden in een bepaalde run. Het laden is gefixt! yay! Ben er wel zojuist achter gekomen dat Reitze
+      een fout in zijn code heeft gemaakt waardoor alle data in Database.txt niet nuttig is. R.I.P.
+27/6: Ben het algoritme gaan runnen met de (als het goed is) verbeterde code. Heb pseudocode gestuurd naar Marijn over
+      hoe Monte Carlo werkt. Daarna ben ik gaan zitten aan het alpha beta algortime.
