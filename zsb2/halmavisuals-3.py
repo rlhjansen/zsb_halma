@@ -43,6 +43,7 @@ def to_notation(coordinates):
 
 class UMI_chessboard2:
     def __init__(self, halma_board, frameworld, board_size=16.0, position_x_z=(0, 0)):
+        self.halma_board_size = halma_board.size
         # Dimensions of the board
         self.chessboard_size = board_size
         self.field_size = (self.chessboard_size / (halma_board.size+1))
@@ -157,11 +158,11 @@ class UMI_chessboard2:
     # (i.e. in the exact center of a square)
     def real_world_location(self, x, z):
         # 7.5 is added so the coordinates start at 0
-        x += 7.5
-        z += 7.5
+        x += (self.halma_board_size+1)/2
+        z += (self.halma_board_size-1)/2
         print(x, z)
         # Any position within one square is set to the exact center of that square
-        for a in range(17):
+        for a in range(20):
 
             if x < a and x > a - 1:
                 x = a - 0.5
@@ -193,11 +194,12 @@ class UMI_chessboard2:
         #   obj.pos = (x, y, z) # back to original position
 
         # only if the player has picked up a piece
+        """
         if isinstance(obj, cylinder):
             obj.pos = (x1, y1, z1)  # set to the new position
         else:
             pass
-
+        """
         return [[x_start, z_start], [x_end, z_end]]
 
     # Checks which object the player has clicked on
@@ -212,16 +214,14 @@ class UMI_chessboard2:
             if mouse_event.press and piece == False:
                 (x, y,
                  z) = mouse_event.pickpos  # retrieve position of the mouse
-                obj = mouse_event.pick  # object that the player has clicked on is retrieved
                 begin_location = self.real_world_location(x, z)
                 print(begin_location)
                 piece = True
 
-            elif mouse_event.press and piece == True:
+            elif mouse_event.press and piece:
                 (x, y,
                  z) = mouse_event.pickpos  # retrieve position of the mouse
                 end_location = self.real_world_location(x, z)
-                piece = False  # piece is released
                 print(end_location)
                 break
         return [begin_location, end_location]
@@ -621,7 +621,8 @@ def main_game_loop(halma_board):
                     print(board_move2)
                     board_move3 = cl.cif.to_movestring(board_move2, halma_board.size)
                     print(board_move3)
-                    move = iterable_moves.next()
+                    #move = iterable_moves.next()
+                    move = board_move3
             else:
                 move = halma_board.current_turn.decide_move(halma_board)
             if move == 'check moves':

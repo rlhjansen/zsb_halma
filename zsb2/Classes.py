@@ -267,6 +267,7 @@ class Board:
     # direction that can be jumped over, in that case all possible further jumps
     # are evaluated, return format = [[start_x, start_y], [end_x, end_y]]
     def scan(self, start_x, start_y, dx, dy, visited, both=True):
+        print(dx, dy)
         try_x = start_x+dx
         try_y = start_y+dy
         moves = []
@@ -288,7 +289,7 @@ class Board:
                     if self.board[middle_x][middle_y] != '.':
                         if self.check_inbetween(start_x, start_y, middle_x, middle_y, jump_x, jump_y, dx, dy):
                             jumps.add((jump_x, jump_y))
-                            visited_set.add((jump_x, jump_y))
+                            visited_set.add((start_x, start_y))
                             if both:
                                 colour = self.board[start_x][start_y]
                                 self.board[start_x][start_y] = '.'
@@ -674,7 +675,7 @@ class ABPlayer(Player):
 
 
 
-"""
+
 halma_board = Board(2, 10, 5, ['h', 'h'])
 for player in halma_board.players:
     player.get_pieces()
@@ -685,4 +686,3 @@ while True:
     print("store starting")
     store()
     print("store = done")
-"""
