@@ -186,7 +186,6 @@ class UMI_chessboard:
             obj.pos = (x1, y1, z1) # set to the new position
         else:
             pass
-            
         return [[x_start, z_start], [x_end, z_end]]
 
 
@@ -201,7 +200,7 @@ class UMI_chessboard:
             if mouse_event.press and piece == False:
                 (x, y, z) = mouse_event.pickpos # retrieve position of the mouse
                 obj = mouse_event.pick # object that the player has clicked on is retrieved
-                begin_location = self.real_world_location(x,z) 
+                begin_location = self.real_world_location(x,z)
                 piece = True
                 
             elif mouse_event.press and piece == True:
@@ -310,7 +309,7 @@ frameworld = frame()
 # Prints the board
 CHESSBOARD = UMI_chessboard(frameworld, 16, (-8, 8))
 
-
+# ik (reitze) ben hier begonnen met functies schrijven vor compatibiliteit
 
 
 

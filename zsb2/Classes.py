@@ -11,7 +11,8 @@ class Player:
     # 0, 1, 2, 3 these represent starting corners as in start_positions.png
     # rows stands for the amount of diagonal rows from the corner
     # size is the boardsize
-    def __init__(self, number, size, rows):
+    def __init__(self, number, size, rows, type):
+        self.type = type
         self.color = self.set_color(number)
         self.number = number
         self.size = size
@@ -121,8 +122,16 @@ class Player:
 
     # enter move from console, i.e. a3a4, or a3a5a7 when jumping
     # enter q to quit
+    # human player
     def decide_move(self, board):
-        chosen_move = raw_input('enter a move:')
+        chosen_move = ""
+        t0 = time()
+        while True:
+            t1 = time()
+            if t1-t0 > 1:
+                chosen_move = raw_input('enter a move:')
+            if chosen_move != "":
+                break
         if chosen_move == 'q':
             exit(0)
         return chosen_move
@@ -161,11 +170,11 @@ class Board:
         player_list = []
         for i in range(len(players)):
             if players[i] == 'h':
-                player_list.append(Player(i, size - 1, rows))
+                player_list.append(Player(i, size - 1, rows, 'h'))
         #    elif players[i] == 'mc':
-        #        player_list.append(MCPlayer(i, size - 1, rows))
+        #        player_list.append(MCPlayer(i, size - 1, rows, 'mc'))
             elif players[i] == 'ab':
-                player_list.append(ABPlayer(i, size - 1, rows))
+                player_list.append(ABPlayer(i, size - 1, rows, 'ab'))
         return player_list
 
     def reset_board(self):
@@ -316,16 +325,20 @@ class Board:
     # checks if there's a piece on the start position mentioned
     # checks if the move is in the list of that players possible moves
     def check_not_legal(self, move):
-        movelist = cif.to_coordinates(move, self.size)
+        try:
+            movelist = cif.to_coordinates(move, self.size)
+        except IndexError:
+            print("that's not even close to a move")
+            return True
         x, y = movelist[0][0], movelist[0][1]
-        print(x, y)
+        #print(x, y)
         if self.board[x][y] == '.':
             print("there is no piece on that position")
             return True
         else:
             player = self.color_player_dict[self.board[x][y]]
             if player == self.current_turn:
-                print(movelist)
+                #print(movelist)
                 print(self.get_moves_piece([x,y]))
                 if movelist in self.get_moves_piece([x,y]):
                     if player == self.current_turn:
@@ -512,8 +525,8 @@ def store(name='Database'):
 class MCPlayer(Player):
     #data = load_data()
 
-    def __init__(self, i, size, rows):
-        Player.__init__(self, i, size, rows)
+    def __init__(self, i, size, rows, type):
+        Player.__init__(self, i, size, rows, type)
         self.path = set()
 
     def board_to_key(self, board):
@@ -610,8 +623,8 @@ class MCPlayer(Player):
 # -------------         -----------------------------------------
 # -------------AlfaBeta -----------------------------------------
 class ABPlayer(Player):
-    def __init__(self, i, size, rows):
-        Player.__init__(self, i, size, rows)
+    def __init__(self, i, size, rows, type):
+        Player.__init__(self, i, size, rows, type)
         self.depth = 4
 
     def decide_move(self, board):
@@ -661,12 +674,15 @@ class ABPlayer(Player):
 
 
 
-
-
+"""
 halma_board = Board(2, 10, 5, ['h', 'h'])
+for player in halma_board.players:
+    player.get_pieces()
+
 while True:
     for _ in range(10000):
         main_game_loop(halma_board)
     print("store starting")
     store()
     print("store = done")
+"""
