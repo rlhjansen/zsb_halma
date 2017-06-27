@@ -197,8 +197,8 @@ class Board:
     def get_score(self):
         red = self.players[0]
         blue = self.players[1]
-        score = red.get_total_manhattan()
-        score -= blue.get_total_manhattan()
+        score = -red.get_total_manhattan()
+        score += blue.get_total_manhattan()
         return score
 
     # set self.current_turn to next player
@@ -439,10 +439,14 @@ def main_game_loop(halma_board):
             move = halma_board.current_turn.decide_move(halma_board)
             if move == 'check moves':
                 moves = halma_board.get_moves_player(halma_board.current_turn)
-                for move in moves:
-                    score = ABPlayer.alpha_beta(halma_board.current_turn,
-                                                halma_board, 99999, -99999, 3)
-                    print(cif.to_movestring(move, halma_board.size), score)
+                for move_int in moves:
+                    move = cif.to_movestring(move_int, halma_board.size)
+                    enemy = halma_board.get_next_player(halma_board.current_turn)
+                    halma_board.make_move(move)
+                    score = ABPlayer.alpha_beta(enemy, halma_board, -99999,
+                                                99999, 1)
+                    reverse_move(move, halma_board)
+                    print(move, score)
                 print('There are', len(moves), 'possible moves.')
             elif move == 'manhattan':
                 print(halma_board.current_turn.get_total_manhattan())
@@ -719,7 +723,7 @@ class ABPlayer(Player):
         return best_score
 
 
-halma_board = Board(2, 10, 5, ['ab', 'h'])
+halma_board = Board(2, 10, 5, ['ab', 'ab'])
 while True:
     for _ in range(1000):
         main_game_loop(halma_board)
