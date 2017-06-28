@@ -1,3 +1,11 @@
+# Classes.py
+# by Artemis ??? (00000000), Jesper ??? (00000000), Jochem Holscher (11007729),
+# Marijn ??? (00000000) and Reitze Jansen (00000000).
+# ------------------------------------------------------------------------------
+# This program runs a halma board. 3 types of players can play on this board:
+# 1. Humans, they will be asked for input moves.
+# 2. Monte Carlo, it will give input based on a database.
+# 3. Alpha Beta, it will give input based on the alpha-beta algorithm.
 
 from __future__ import print_function
 import class_independent_functions as cif
@@ -515,21 +523,21 @@ def decipher(string, index):
     i_2 = index
     i_1 = index
 
-    while char != '"':
+    while char != '"':  # Find the board key
         i_2 += 1
         char = string[i_2]
     key = string[i_1:i_2]
 
     i_2 += 6
     i_1 = i_2
-    while char != ',':
+    while char != ',':  # Find the win value
         i_2 += 1
         char = string[i_2]
     win = int(string[i_1:i_2])
 
     i_2 += 2
     i_1 = i_2
-    while char != ']':
+    while char != ']':  # Find the total value
         i_2 += 1
         char = string[i_2]
     total = int(string[i_1: i_2])
@@ -654,8 +662,6 @@ class MCPlayer(Player):
         """Return the win-percentage of a board setting."""
         value = MCPlayer.data.get(key)
         if value:
-            if value[1] == 0:
-                return 99  # This is never supposed to be best move.
             return float(value[0]) / float(value[1])  # wins / total
         return 0.5 - float(self.get_total_manhattan()) / 10000.0  # Guideline
 
@@ -665,7 +671,7 @@ class MCPlayer(Player):
         move = None
         key = None
 
-        while key in self.path or not key:
+        while key in self.path or not key:  # Never return to a previous board.
             i = randint(0, len(moves) - 1)
             move = cif.to_movestring(moves[i], board.size)
             board.make_move(move)
@@ -686,9 +692,9 @@ class MCPlayer(Player):
                 old_states += 1
 
             value = MCPlayer.data[key]
-            if win:
+            if win:  # If you win, the win value will increase.
                 value[0] += 1
-            value[1] += 1
+            value[1] += 1  # The total value always increases.
 
         self.path = set()
         return float(old_states) / float(new_states + old_states)
@@ -732,7 +738,7 @@ class ABPlayer(Player):
     @staticmethod
     def alpha_beta(player, board, red, blue, depth):
         """Return the score that is least harmful for the given move."""
-        if depth == 0 or not board.no_winner_yet():
+        if depth == 0 or not board.no_winner_yet():  # Baseline
             return board.get_score()
 
         best_score = red
@@ -761,7 +767,6 @@ class ABPlayer(Player):
                 blue = best_score
 
         return best_score
-
 
 
 halma_board = Board(2, 10, 5, ['mc', 'mc'])
