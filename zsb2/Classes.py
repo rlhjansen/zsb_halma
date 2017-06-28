@@ -728,7 +728,7 @@ class ABPlayer(Player):
         return best_score
 
 
-halma_board = Board(2, 10, 5, ['ab', 'ab'])
+halma_board = Board(2, 10, 5, ['ab', 'h'])
 while True:
     for _ in range(1000):
         main_game_loop(halma_board)
