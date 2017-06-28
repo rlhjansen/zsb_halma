@@ -24,25 +24,8 @@ import Classes as cl
 # from random import uniform, randint
 
 
-# Returns notation [a1-p16] from coordinates
-def to_coordinate(notation):
-    z = ord(notation[0]) - ord('a')
-    x = int(notation[1]) - 1
-    return (x, z)
-
-
-# Returns coordinates from notation [a1-p16]
-def to_notation(coordinates):
-    (x, z) = coordinates
-    x += 7
-    z += 7
-    letter = chr(ord('a') + z)
-    number = x + 1
-    return letter + str(number)
-
-
-class UMI_chessboard2:
-    def __init__(self, halma_board, frameworld, board_size=16.0, position_x_z=(0, 0)):
+class UMI_chessboard:
+    def __init__(self, halma_board, frameworld, board_size=16.0):
         self.halma_board_size = halma_board.size
         # Dimensions of the board
         self.chessboard_size = board_size
@@ -67,7 +50,6 @@ class UMI_chessboard2:
         self.fourth_player_color = (255, 255, 0)
 
 
-
         # Set the frame of the chessboard.
         self.framemp = frame(frame=frameworld)
         self.framemp.pos = (-(halma_board.size/2-0.5), 0, -(halma_board.size/2-0.5))
@@ -80,15 +62,6 @@ class UMI_chessboard2:
 
         # Add the pieces
         self.add_pieces(halma_board)
-
-        self.move_object = cylinder(frame=self.framemp,
-                         axis=(0, self.pieces_height, 0),
-                         radius=self.field_size * 0.35,
-                         pos=(
-                         self.field_size * (0 + 1) - self.field_size / 2.0,
-                         -5,
-                         (self.field_size * 0) + self.field_size / 2),
-                         color=(1,1,1))
 
         # Pieces are able to move
 
@@ -124,8 +97,8 @@ class UMI_chessboard2:
         # Draw the beams to create 256 squares
         self.width_beams = []
         self.vert_beams = []
-        for field in range(16):
-            beam_offset = field * (self.chessboard_size / 16.0)
+        for field in range(int(self.chessboard_size)):
+            beam_offset = field * (self.chessboard_size / self.chessboard_size)
             self.width_beams.append(box(frame=self.framemp,
                                         height=self.wallhght,
                                         length=self.wallthck,
@@ -167,8 +140,8 @@ class UMI_chessboard2:
                                )
         # Fill in the black squares
         self.fields = []
-        for x in range(16):
-            for z in range(16):
+        for x in range(int(self.chessboard_size)):
+            for z in range(int(self.chessboard_size)):
                 if (x + z) % 2 == 0:
                     self.fields.append(box(frame=self.framemp,
                                            height=0.001,
@@ -200,26 +173,7 @@ class UMI_chessboard2:
     # Currently doing: sets the piece that the player has picked up on its new position.
     # Should be doing: check if this is a legal move, if so it should be moved to its
     # new position. If not, the piece should stay on its original position.
-    def move_piece(self, end_location, obj):
-        (x1, z1) = end_location
-        y1 = 0.1 + 0.5 * self.wallhght # y is always the same, just above the board
 
-        # only if the player has picked up a piece
-        if isinstance(obj, cylinder):
-            obj.pos = (x1, y1, z1)  # set to the new position
-            #rate(100)
-        else:
-            pass
-
-    def move_piece_visual(self, end_location, obj):
-        (x1, z1) = end_location
-        y1 = -5  # y is always the same, just above the board
-        # only if the player has picked up a piece
-        if isinstance(obj, cylinder):
-            obj.pos = (x1, y1, z1)  # set to the new position
-            #rate(100)
-        else:
-            pass
 
 
     # Checks which object the player has clicked on
@@ -333,14 +287,6 @@ frameworld = frame()
 # Prints the board
 
 def main_game_loop(halma_board):
-    #rate(100)
-    test_moves1 = ["a12a11","a11a10", "a10a9", "a9a8", "a8a7", "a7a6", "a6a5", "a5a4", "a4a3", "a3a2", "a2a1"]
-    test_moves2 = ["p5p6", "p6p7", "p7p8", "p8p9", "p9p10", "p10p11", "p11p12", "p12p13", "p13p14", "p14p15", "p15p16"]
-    test_moves = []
-    for i in range(len(test_moves1)):
-        test_moves.append(test_moves1[i])
-        test_moves.append(test_moves2[i])
-    iterable_moves = iter(test_moves)
     turn = 1
     t0 = cl.time()
     while halma_board.no_winner_yet():
@@ -365,25 +311,18 @@ def main_game_loop(halma_board):
         not_legal = True
         while not_legal:
             if halma_board.current_turn.type == 'h':
-                if turn<20 or 30<turn:
-                    movetype = 'm'
-                else:
-                    movetype = raw_input("'k' for keyboard input, m for mouse input")
+                movetype = 'm'
                 if movetype == 'k':
-                    move = "check moves"
+                    move = raw_input("enter a move")
                     #move = halma_board.current_turn.decide_move(halma_board)
                     print(move)
                 else:
                     board_move = CHESSBOARD.move_events()
                     [(x_start, y_start),(x_end, y_end)] = board_move
                     board_move2 = [(int(y_start-0.5), int(x_start-1.5)), (int(y_end-0.5), int(x_end-1.5))]
-                    print(board_move)
                     board_move3 = cl.cif.to_movestring(board_move2, halma_board.size)
-                    print(board_move3)
-                    #move = iterable_moves.next()
                     move = board_move3
             else:
-                CHESSBOARD.move_piece_visual((0,0), CHESSBOARD.move_object)
                 move = halma_board.current_turn.decide_move(halma_board)
             if move == 'check moves':
                 moves = halma_board.get_moves_player(halma_board.current_turn)
@@ -395,15 +334,12 @@ def main_game_loop(halma_board):
             elif move == 'goalmanhattan':
                 print(halma_board.current_turn.goal_manhattan)
             else:
-                print("yes")
                 not_legal = halma_board.check_not_legal(move)
                 if not not_legal:
-                    print("test")
+                    print(move)
                     CHESSBOARD.make_move(move, halma_board.size)
                     rate(100)
-                #CHESSBOARD.move_piece_visual((0, 0), CHESSBOARD.move_object)
 
-        #drawfile.draw(halma_board, move)
         halma_board.make_move(move)
         turn += 1
         halma_board.next_player()
@@ -414,17 +350,19 @@ def main_game_loop(halma_board):
         states += player.results(player.player_wins())
 
     winner = halma_board.who_won()
-    t1 = time()
+    t1 = cl.time()
     print("Congratulations!,", winner, "has won!")
     print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
     print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
     print()
     halma_board.reset_board()
 
-
-halma_board = cl.Board(2, 16, 5, ['ab', 'h'])
-#CHESSBOARD = UMI_chessboard(frameworld, 16, (-8, 8))
-CHESSBOARD = UMI_chessboard2(halma_board, frameworld, 16, (-8, 8))
+players = 2
+boardsize = 6
+rows = 3
+playerlist = ['ab', 'ab']
+halma_board = cl.Board(players, boardsize, rows, playerlist)
+CHESSBOARD = UMI_chessboard(halma_board, frameworld, board_size=boardsize)
 main_game_loop(halma_board)
 
 

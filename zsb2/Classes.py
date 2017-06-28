@@ -358,6 +358,7 @@ class Board:
                 if movelist in self.get_moves_piece([x,y]):
                     if player == self.current_turn:
                         return False
+                """
                 else:
                     lbl = label(xoffset= 270,yoffset= -270, text="That's not a valid move",color=(1,0,0), border=4,height=12,font='monospace',line=0)
                     pause(lbl)
@@ -368,7 +369,7 @@ class Board:
                 pause(lbl)
                 print("you're not that player")
                 return True
-
+                """
     # checks if a position on the board is unoccupied
     def check_free(self, x, y):
         if self.board[x][y] == '.':
@@ -458,10 +459,6 @@ def main_game_loop(halma_board):
                     reverse_move(move, halma_board)
                     print(move, score)
                 print('There are', len(moves), 'possible moves.')
-            elif move == 'manhattan':
-                print(halma_board.current_turn.get_total_manhattan())
-            elif move == 'goalmanhattan':
-                print(halma_board.current_turn.goal_manhattan)
             else:
                 not_legal = halma_board.check_not_legal(move)
         #drawfile.draw(halma_board, move)
@@ -483,18 +480,6 @@ def main_game_loop(halma_board):
         print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
 
     halma_board.reset_board()
-
-
-def ask_new_game():
-    new_game = raw_input("Do you want to start a new game? (y/n):")
-    while True:
-        if new_game == 'y':
-            return True
-        elif new_game == 'n':
-            return False
-        else:
-            print("that's not a valid option")
-            new_game = raw_input("Do you want to start a new game? (y/n):")
 
 
 # ==========================================
