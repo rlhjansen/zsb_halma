@@ -67,6 +67,7 @@ class UMI_chessboard2:
         self.fourth_player_color = (255, 255, 0)
 
 
+
         # Set the frame of the chessboard.
         self.framemp = frame(frame=frameworld)
         self.framemp.pos = (-(halma_board.size/2-0.5), 0, -(halma_board.size/2-0.5))
@@ -80,7 +81,34 @@ class UMI_chessboard2:
         # Add the pieces
         self.add_pieces(halma_board)
 
+        self.move_object = cylinder(frame=self.framemp,
+                         axis=(0, self.pieces_height, 0),
+                         radius=self.field_size * 0.35,
+                         pos=(
+                         self.field_size * (0 + 1) - self.field_size / 2.0,
+                         -5,
+                         (self.field_size * 0) + self.field_size / 2),
+                         color=(1,1,1))
+
         # Pieces are able to move
+
+
+    def make_move(self, move, size):
+        coord_move = cl.cif.to_coordinates(move, size)
+        [(y_start, x_start), (y_end, x_end)] = coord_move
+        [obj, colour] = self.pieces[(x_start, y_start)]
+        del self.pieces[(x_start, y_start)]
+        self.pieces[(x_end, y_end)] = [obj, colour]
+        end_location = (x_end + 1, y_end)
+        (x1, z1) = end_location
+        y1 = 0.1 + 0.5 * self.wallhght  # y is always the same, just above the board
+        rate(100)
+        # only if the player has picked up a piece
+        if isinstance(obj, cylinder):
+            obj.pos = (x1-0.5, y1, z1+0.5)  # set to the new position
+        else:
+            pass
+
 
     # Generates the board in 3-D
     def generate_board(self):
@@ -180,8 +208,20 @@ class UMI_chessboard2:
         # only if the player has picked up a piece
         if isinstance(obj, cylinder):
             obj.pos = (x1, y1, z1)  # set to the new position
+            #rate(100)
         else:
             pass
+
+    def move_piece_visual(self, end_location, obj):
+        (x1, z1) = end_location
+        y1 = -5  # y is always the same, just above the board
+        # only if the player has picked up a piece
+        if isinstance(obj, cylinder):
+            obj.pos = (x1, y1, z1)  # set to the new position
+            #rate(100)
+        else:
+            pass
+
 
     # Checks which object the player has clicked on
     def move_events(self):
@@ -190,7 +230,6 @@ class UMI_chessboard2:
         end_location = None
         while True:
             mouse_event = scene.mouse.getevent()
-
             if mouse_event.press and piece == False:
 
                 (x, y,
@@ -207,7 +246,7 @@ class UMI_chessboard2:
                 end_location = self.real_world_location(x, z)
                 print(end_location)
                 break
-        return [begin_location, end_location, obj]
+        return [begin_location, end_location]
 
     # Makes the pieces in the different colors in their corresponding starting positions.
     def red_player(self, x, z):
@@ -295,7 +334,7 @@ frameworld = frame()
 # Prints the board
 
 def main_game_loop(halma_board):
-    rate(10)
+    #rate(100)
     test_moves1 = ["a12a11","a11a10", "a10a9", "a9a8", "a8a7", "a7a6", "a6a5", "a5a4", "a4a3", "a3a2", "a2a1"]
     test_moves2 = ["p5p6", "p6p7", "p7p8", "p8p9", "p9p10", "p10p11", "p11p12", "p12p13", "p13p14", "p14p15", "p15p16"]
     test_moves = []
@@ -325,23 +364,15 @@ def main_game_loop(halma_board):
                     print(move)
                 else:
                     board_move = CHESSBOARD.move_events()
-                    [(x_start, y_start),(x_end, y_end), obj] = board_move
-                    end_location = (x_end-1, y_end)
+                    [(x_start, y_start),(x_end, y_end)] = board_move
                     board_move2 = [(int(y_start-0.5), int(x_start-1.5)), (int(y_end-0.5), int(x_end-1.5))]
                     print(board_move)
                     board_move3 = cl.cif.to_movestring(board_move2, halma_board.size)
-                    board_move4 = cl.cif.to_coordinates(board_move3, halma_board.size)
-                    print(board_move4)
-                    [(y_start2, x_start2), (y_end2, x_end2)] = board_move4
-                    print(CHESSBOARD.pieces[(y_start2, x_start2)][0])
-                    second_obj = CHESSBOARD.pieces[(y_start2, x_start2)][0]
-                    board_move5 = [(x_start2+1.5, y_start2+0.5), (x_end2+1.5, y_end2+0.5), second_obj]
                     print(board_move3)
-                    print(board_move)
-                    print(board_move5)
                     #move = iterable_moves.next()
                     move = board_move3
             else:
+                CHESSBOARD.move_piece_visual((0,0), CHESSBOARD.move_object)
                 move = halma_board.current_turn.decide_move(halma_board)
             if move == 'check moves':
                 moves = halma_board.get_moves_player(halma_board.current_turn)
@@ -353,9 +384,13 @@ def main_game_loop(halma_board):
             elif move == 'goalmanhattan':
                 print(halma_board.current_turn.goal_manhattan)
             else:
+                print("yes")
                 not_legal = halma_board.check_not_legal(move)
-                if halma_board.current_turn.type == 'h' and not not_legal:
-                    CHESSBOARD.move_piece(end_location, obj)
+                if not not_legal:
+                    print("test")
+                    CHESSBOARD.make_move(move, halma_board.size)
+                #CHESSBOARD.move_piece_visual((0, 0), CHESSBOARD.move_object)
+
         #drawfile.draw(halma_board, move)
         halma_board.make_move(move)
         turn += 1
@@ -374,10 +409,9 @@ def main_game_loop(halma_board):
     halma_board.reset_board()
 
 
-halma_board = cl.Board(2, 16, 5, ['h', 'h'])
+halma_board = cl.Board(2, 16, 5, ['ab', 'h'])
 #CHESSBOARD = UMI_chessboard(frameworld, 16, (-8, 8))
 CHESSBOARD = UMI_chessboard2(halma_board, frameworld, 16, (-8, 8))
-
 main_game_loop(halma_board)
 
 

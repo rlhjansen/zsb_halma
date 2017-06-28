@@ -11,7 +11,7 @@ from __future__ import print_function
 import class_independent_functions as cif
 from random import randint
 from copy import deepcopy
-from time import time
+from time import time, sleep
 
 
 class Player:
@@ -133,11 +133,8 @@ class Player:
     # human player
     def decide_move(self, board):
         chosen_move = ""
-        t0 = time()
         while True:
-            t1 = time()
-            if t1-t0 > 1:
-                chosen_move = raw_input('enter a move:')
+            chosen_move = raw_input('enter a move:')
             if chosen_move != "":
                 break
         if chosen_move == 'q':
@@ -703,6 +700,7 @@ class MCPlayer(Player):
 # -------------         -----------------------------------------
 # -------------AlfaBeta -----------------------------------------
 class ABPlayer(Player):
+    test = 0
 
     def __init__(self, i, size, rows, type):
         Player.__init__(self, i, size, rows, type)
@@ -768,9 +766,10 @@ class ABPlayer(Player):
 
         return best_score
 
-
-halma_board = Board(2, 10, 5, ['mc', 'mc'])
+"""
+halma_board = Board(2, 10, 5, ['ab', 'h'])
 while True:
     for _ in range(1000):
         main_game_loop(halma_board)
     store()
+"""
