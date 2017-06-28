@@ -351,10 +351,14 @@ def main_game_loop(halma_board):
 
     winner = halma_board.who_won()
     t1 = cl.time()
-    print("Congratulations!,", winner, "has won!")
-    print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
-    print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
-    print()
+    lbl = label(yoffset=50, text="Congratulations! "+str(winner)+" has won!\n"+"It took "+str(int(t1 - t0))+" seconds, over "+str(turn)+" turns.\n"+str(int(states * 100) / len(halma_board.players))+'% of the states were in the database.',color=(30/255,144/255,1), border=4,height=30,font='monospace',line=0)
+    cl.pause(lbl)
+    lbl = label(yoffset=50, text="PLAY AGAIN",color=(30/255,144/255,1), border=4,height=30,font='monospace',line=0)
+    cl.pause(lbl)
+#     print("Congratulations!,", winner, "has won!")
+#     print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
+#     print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
+#     print()
     halma_board.reset_board()
 
 players = 2
