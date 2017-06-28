@@ -764,9 +764,8 @@ def pause(lbl):
                 lbl.visible = 0
                 return
                 
-
 """
-halma_board = Board(2, 10, 5, ['ab', 'h'])
+halma_board = Board(2, 10, 5, ['ab', 'ab'])
 while True:
     for _ in range(1000):
         main_game_loop(halma_board)
