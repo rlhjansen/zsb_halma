@@ -510,31 +510,32 @@ def load_data(name='Database.txt'):
 
 
 def decipher(string, index):
-        char = ''
-        i_2 = index
-        i_1 = index
+    """These are the rules to being able to extract data from the database."""
+    char = ''
+    i_2 = index
+    i_1 = index
 
-        while char != '"':
-            i_2 += 1
-            char = string[i_2]
-        key = string[i_1:i_2]
+    while char != '"':
+        i_2 += 1
+        char = string[i_2]
+    key = string[i_1:i_2]
 
-        i_2 += 6
-        i_1 = i_2
-        while char != ',':
-            i_2 += 1
-            char = string[i_2]
-        win = int(string[i_1:i_2])
+    i_2 += 6
+    i_1 = i_2
+    while char != ',':
+        i_2 += 1
+        char = string[i_2]
+    win = int(string[i_1:i_2])
 
-        i_2 += 2
-        i_1 = i_2
-        while char != ']':
-            i_2 += 1
-            char = string[i_2]
-        total = int(string[i_1: i_2])
+    i_2 += 2
+    i_1 = i_2
+    while char != ']':
+        i_2 += 1
+        char = string[i_2]
+    total = int(string[i_1: i_2])
 
-        i_2 += 6
-        return key, win, total, i_2
+    i_2 += 6
+    return key, win, total, i_2
 
 
 def reverse_move(move, board):
@@ -565,6 +566,7 @@ def store(name='Database.txt', data=None):
 
 def merge_database(name1='Database1.text', name2='Database2.txt',
                    name3='Merged_Database.txt'):
+    """Combine two Monte Carlo databases."""
     data = load_data(name=name1)
 
     print('Reading the second database file...')
@@ -643,6 +645,7 @@ class MCPlayer(Player):
         return key
 
     def decide_move(self, board):
+        """To improve learning, it sometimes makes a random move."""
         if randint(0, 9) == 9:
             return self.rand_move(board)
         return self.best_move(board)
@@ -657,6 +660,7 @@ class MCPlayer(Player):
         return 0.5 - float(self.get_total_manhattan()) / 10000.0  # Guideline
 
     def rand_move(self, board):
+        """Return a random move between all allowed moves."""
         moves = board.get_moves_player(self)
         move = None
         key = None
@@ -743,6 +747,7 @@ class ABPlayer(Player):
                                         depth - 1)
             reverse_move(move, board)
 
+            # Cut of branches that will never be reached.
             if player.color == 'r' and score > best_score:
                 if score >= blue:
                     return blue
@@ -756,6 +761,7 @@ class ABPlayer(Player):
                 blue = best_score
 
         return best_score
+
 
 
 halma_board = Board(2, 10, 5, ['mc', 'mc'])
