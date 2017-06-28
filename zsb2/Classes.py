@@ -12,6 +12,7 @@ import class_independent_functions as cif
 from random import randint
 from copy import deepcopy
 from time import time, sleep
+from visual import *
 
 
 class Player:
@@ -358,9 +359,13 @@ class Board:
                     if player == self.current_turn:
                         return False
                 else:
+                    lbl = label(xoffset= 270,yoffset= -270, text="That's not a valid move",color=(1,0,0), border=4,height=12,font='monospace',line=0)
+                    pause(lbl)
                     print("that's not a valid move")
                     return True
             else:
+                lbl = label(xoffset= 270,yoffset= -270, text="You're not that player",color=(1,0,0), border=4,height=12,font='monospace',line=0)
+                pause(lbl)
                 print("you're not that player")
                 return True
 
@@ -765,6 +770,15 @@ class ABPlayer(Player):
                 blue = best_score
 
         return best_score
+def pause(lbl):
+    while True:
+        rate(100)
+        if scene.mouse.events:
+            m = scene.mouse.getevent()
+            if m.click == 'left':
+                lbl.visible = 0
+                return
+                
 
 """
 halma_board = Board(2, 10, 5, ['ab', 'h'])
