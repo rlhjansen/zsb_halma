@@ -102,7 +102,6 @@ class UMI_chessboard2:
         end_location = (x_end + 1, y_end)
         (x1, z1) = end_location
         y1 = 0.1 + 0.5 * self.wallhght  # y is always the same, just above the board
-        rate(100)
         # only if the player has picked up a piece
         if isinstance(obj, cylinder):
             obj.pos = (x1-0.5, y1, z1+0.5)  # set to the new position
@@ -348,6 +347,18 @@ def main_game_loop(halma_board):
         if True:
             halma_board.print_board()
             print()
+            if halma_board.current_turn.color == 'r':
+                color_n= "Red"
+                lbl = label(xoffset= 320,yoffset= 320, text=color_n,color=(1,0,0), border=4,height=30,font='monospace',line=0)
+            if halma_board.current_turn.color == 'b':
+                color_n= "Blue"
+                lbl = label(xoffset= 320,yoffset= 320, text=color_n,color=(0,0,1), border=4,height=30,font='monospace',line=0)
+            if halma_board.current_turn.color == 'g':
+                color_n= "Green"
+                lbl = label(xoffset= 320,yoffset= 320, text=color_n,color=(0,100/255,0), border=4,height=30,font='monospace',line=0)
+            if halma_board.current_turn.color == 'y':
+                color_n= "Yellow"
+                lbl = label(xoffset= 320,yoffset= 320, text=color_n,color=(1,1,0), border=4,height=30,font='monospace',line=0)
             print("turn", turn, halma_board.current_turn.color)
             print(halma_board.current_turn.get_total_manhattan())
 
@@ -389,12 +400,14 @@ def main_game_loop(halma_board):
                 if not not_legal:
                     print("test")
                     CHESSBOARD.make_move(move, halma_board.size)
+                    rate(100)
                 #CHESSBOARD.move_piece_visual((0, 0), CHESSBOARD.move_object)
 
         #drawfile.draw(halma_board, move)
         halma_board.make_move(move)
         turn += 1
         halma_board.next_player()
+        lbl.visible = 0
 
     states = 0
     for player in halma_board.players:
