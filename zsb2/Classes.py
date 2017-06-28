@@ -496,12 +496,23 @@ def load_data(name='Database.txt'):
         string = file.read()
 
     print('Loading the contents...')
+    index = 3
     data = {}
-    i_1 = 3
-    i_2 = 3
     count = 0
-    while i_2 < len(string):
+    while index < len(string):
+        key, win, total, index = decipher(string, index)
+        count += 1
+        data[key] = [win, total]
+
+    print('Loaded', count, 'states.')
+    print()
+    return data
+
+
+def decipher(string, index):
         char = ''
+        i_2 = index
+        i_1 = index
 
         while char != '"':
             i_2 += 1
@@ -523,13 +534,7 @@ def load_data(name='Database.txt'):
         total = int(string[i_1: i_2])
 
         i_2 += 6
-        i_1 = i_2
-        count += 1
-        data[key] = [win, total]
-
-    print('Loaded', count, 'states.')
-    print()
-    return data
+        return key, win, total, i_2
 
 
 def reverse_move(move, board):
@@ -543,15 +548,46 @@ def reverse_move(move, board):
     board.make_move(move[i:] + move[:i])
 
 
-def store(name='Database.txt'):
+def store(name='Database.txt', data=None):
     """Reset the Database file and write all contents of the dictionary."""
-    print("Saving data...")
+    if not data:
+        data = MCPlayer.data
+
+    print("Saving data, don't quit the program now.")
     with open(name, 'w') as file:
         file.truncate(0)
-        for key in MCPlayer.data.keys():
-            value = MCPlayer.data[key]
+        for key in data.keys():
+            value = data[key]
             file.write('"""' + str(key) + '"""' + ': ' + str(value) + ',\n')
-    print("Done, stored", len(MCPlayer.data.keys()), "states.")
+    print("Done, stored", len(data.keys()), "states to", name)
+    print()
+
+
+def merge_database(name1='Database1.text', name2='Database2.txt',
+                   name3='Merged_Database.txt'):
+    data = load_data(name=name1)
+
+    print('Reading the second database file...')
+    with open(name2, "r") as file:
+        string = file.read()
+
+    print('Merging the contents...')
+    index = 3
+    merge_count = 0
+    new_count = 0
+    while index < len(string):
+        key, win, total, index = decipher(string, index)
+        if key in data:
+            [old_win, old_total] = data[key]
+            data[key] = [old_win + win, old_total + total]
+            merge_count += 1
+        else:
+            data[key] = [win, total]
+            new_count += 1
+    print('Success, merged', merge_count, 'and found', new_count, 'new states.')
+    print()
+
+    store(name=name3, data=data)
 
 
 class MCPlayer(Player):
@@ -584,7 +620,6 @@ class MCPlayer(Player):
             reverse_move(move, board)
 
         self.path.add(best_key)
-        print(MCPlayer.data[best_key], best_key)
         return best_move
 
     def board_to_key(self, board):
@@ -658,7 +693,6 @@ class MCPlayer(Player):
 # -------------         -----------------------------------------
 # -------------AlfaBeta -----------------------------------------
 class ABPlayer(Player):
-    test = 0
 
     def __init__(self, i, size, rows, type):
         Player.__init__(self, i, size, rows, type)
@@ -675,7 +709,6 @@ class ABPlayer(Player):
         red = -99999
         blue = 99999
 
-        t_0 = time()
         for move_int in board.get_moves_player(self):
             move = cif.to_movestring(move_int, board.size)
             board.make_move(move)
@@ -690,9 +723,6 @@ class ABPlayer(Player):
                 best_score = score
 
             reverse_move(move, board)
-
-        t_1 = time()
-        print('it took', t_1 - t_0, 'seconds to check', len(board.get_moves_player(self)), 'moves.')
         return best_move
 
     @staticmethod
@@ -728,7 +758,7 @@ class ABPlayer(Player):
         return best_score
 
 
-halma_board = Board(2, 10, 5, ['ab', 'h'])
+halma_board = Board(2, 10, 5, ['mc', 'mc'])
 while True:
     for _ in range(1000):
         main_game_loop(halma_board)
