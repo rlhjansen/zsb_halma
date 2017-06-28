@@ -658,9 +658,11 @@ class MCPlayer(Player):
 # -------------         -----------------------------------------
 # -------------AlfaBeta -----------------------------------------
 class ABPlayer(Player):
+    test = 0
+
     def __init__(self, i, size, rows, type):
         Player.__init__(self, i, size, rows, type)
-        self.depth = 4
+        self.depth = 2
 
     def decide_move(self, board):
         """Returns the move that is best according to the Alpha Beta function"""
@@ -673,6 +675,7 @@ class ABPlayer(Player):
         red = -99999
         blue = 99999
 
+        t_0 = time()
         for move_int in board.get_moves_player(self):
             move = cif.to_movestring(move_int, board.size)
             board.make_move(move)
@@ -688,6 +691,8 @@ class ABPlayer(Player):
 
             reverse_move(move, board)
 
+        t_1 = time()
+        print('it took', t_1 - t_0, 'seconds to check', len(board.get_moves_player(self)), 'moves.')
         return best_move
 
     @staticmethod

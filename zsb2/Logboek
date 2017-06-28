@@ -18,4 +18,4 @@
       nieuw zijn gevonden in een bepaalde run. Het laden is gefixt! yay! Ben er wel zojuist achter gekomen dat Reitze
       een fout in zijn code heeft gemaakt waardoor alle data in Database.txt niet nuttig is. R.I.P.
 27/6: Ben het algoritme gaan runnen met de (als het goed is) verbeterde code. Heb pseudocode gestuurd naar Marijn over
-      hoe Monte Carlo werkt. Daarna ben ik gaan zitten aan het alpha beta algortime.
+      hoe Monte Carlo werkt. Daarna heb ik het alpha beta algoritme geschreven.
