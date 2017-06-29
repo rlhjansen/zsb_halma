@@ -343,12 +343,10 @@ class Board:
         try:
             movelist = cif.to_coordinates(move, self.size)
         except IndexError:
-            print("that's not even close to a move")
             return True
         x, y = movelist[0][0], movelist[0][1]
         #print(x, y)
         if self.board[x][y] == '.':
-            print("there is no piece on that position")
             return True
         else:
             player = self.color_player_dict[self.board[x][y]]
@@ -358,18 +356,18 @@ class Board:
                 if movelist in self.get_moves_piece([x,y]):
                     if player == self.current_turn:
                         return False
-                """
+                
                 else:
                     lbl = label(xoffset= 270,yoffset= -270, text="That's not a valid move",color=(1,0,0), border=4,height=12,font='monospace',line=0)
                     pause(lbl)
-                    print("that's not a valid move")
+                    #print("that's not a valid move")
                     return True
             else:
                 lbl = label(xoffset= 270,yoffset= -270, text="You're not that player",color=(1,0,0), border=4,height=12,font='monospace',line=0)
                 pause(lbl)
-                print("you're not that player")
+                #print("you're not that player")
                 return True
-                """
+            
     # checks if a position on the board is unoccupied
     def check_free(self, x, y):
         if self.board[x][y] == '.':
@@ -442,8 +440,6 @@ def main_game_loop(halma_board):
     while halma_board.no_winner_yet():
         if not halma_board.test_run:
             halma_board.print_board()
-            print()
-            print("turn", turn, halma_board.current_turn.color)
 
         not_legal = True
         while not_legal:
@@ -457,8 +453,8 @@ def main_game_loop(halma_board):
                     score = ABPlayer.alpha_beta(enemy, halma_board, -99999,
                                                 99999, 1)
                     reverse_move(move, halma_board)
-                    print(move, score)
-                print('There are', len(moves), 'possible moves.')
+                    #print(move, score)
+                #print('There are', len(moves), 'possible moves.')
             else:
                 not_legal = halma_board.check_not_legal(move)
         #drawfile.draw(halma_board, move)
@@ -472,7 +468,8 @@ def main_game_loop(halma_board):
 
     winner = halma_board.who_won()
     t1 = time()
-    if not halma_board.test_run:
+    #if not halma_board.test_run:
+    if False:
         print("Congratulations!,", winner, "has won!")
         print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
         print()
@@ -764,8 +761,9 @@ def pause(lbl):
                 lbl.visible = 0
                 return
                 
+
 """
-halma_board = Board(2, 10, 5, ['ab', 'ab'])
+halma_board = Board(2, 10, 5, ['ab', 'h'])
 while True:
     for _ in range(1000):
         main_game_loop(halma_board)
