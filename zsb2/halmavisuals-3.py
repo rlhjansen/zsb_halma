@@ -314,14 +314,7 @@ class UMI_chessboard:
 
 
 
-# Settings of the display
-scene.width = 800
-scene.height = 800
-scene.title = "Halma"
-scene.forward = (0, -0.000001, 0)
 
-frameworld = frame()
-# Prints the board
 
 def main_game_loop(halma_board):
     turn = 1
@@ -403,12 +396,20 @@ def main_game_loop(halma_board):
     main_game_loop(halma_board)
 
 players = 2
-boardsize = 6
-rows = 3
-playerlist = ['ab', 'ab']
+boardsize = 10
+rows = 5
+playerlist = ['mc', 'ab']
+halma_board = cl.Board(players, boardsize, rows, playerlist)
+# Settings of the display
+scene.width = 800
+scene.height = 800
+scene.title = "Halma"
+scene.forward = (0, -0.000001, 0)
+
+frameworld = frame()
+# Prints the board
 lbl = label(yoffset=50, text="START THE GAME",color=(30/255,144/255,1), border=4,height=30,font='monospace',line=0)
 cl.pause(lbl)
-halma_board = cl.Board(players, boardsize, rows, playerlist)
 CHESSBOARD = UMI_chessboard(halma_board, frameworld, board_size=boardsize)
 main_game_loop(halma_board)
 
