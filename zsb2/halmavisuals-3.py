@@ -64,8 +64,45 @@ class UMI_chessboard:
         self.add_pieces(halma_board)
 
         # Pieces are able to move
+        
+    def reset_board(self, halma_board):
+        for player in halma_board.players:
+            for [x,y] in player.get_pieces():
+                piece = self.pieces[y, x][0]
+                del piece
+                del self.pieces[y,x]
+        halma_board.reset_board()
+        self.add_pieces(halma_board)
+        self.mchessboard.visible = True
+        for part in self.width_beams:
+            part.visible = True
+        for part in self.vert_beams:
+            part.visible = True
+        for part in self.fields:
+            part.visible = True
 
+    def make_invisible(self, Hboard):
+        for player in Hboard.players:
+            for [x,y] in player.get_pieces():
+                piece = self.pieces[y, x][0]
+                piece.visible = False
+        self.mchessboard.visible = False
+        for part in self.width_beams:
+            part.visible = False
+        for part in self.vert_beams:
+            part.visible = False
+        for part in self.fields:
+            part.visible = False
 
+            
+    def winner_to_colour(self, winner):
+        if winner == 'Red':
+            (r,g,b) = self.first_player_color
+        if winner == 'Blue':
+            (r,g,b) = self.second_player_color
+        return_color = (r/255,g/255,b/255)
+        return return_color
+    
     def make_move(self, move, size):
         coord_move = cl.cif.to_coordinates(move, size)
         [(y_start, x_start), (y_end, x_end)] = coord_move
@@ -190,14 +227,14 @@ class UMI_chessboard:
                 obj = mouse_event.pick # object that the player has clicked on is retrieved
                 if isinstance(obj, cylinder):
                     begin_location = self.real_world_location(x, z)
-                    print(begin_location)
+                    #print(begin_location)
                     piece = True
 
             elif mouse_event.press and piece:
                 (x, y,
                  z) = mouse_event.pickpos  # retrieve position of the mouse
                 end_location = self.real_world_location(x, z)
-                print(end_location)
+                #print(end_location)
                 break
         return [begin_location, end_location]
 
@@ -305,8 +342,8 @@ def main_game_loop(halma_board):
             if halma_board.current_turn.color == 'y':
                 color_n= "Yellow"
                 lbl = label(xoffset= 320,yoffset= 320, text=color_n,color=(1,1,0), border=4,height=30,font='monospace',line=0)
-            print("turn", turn, halma_board.current_turn.color)
-            print(halma_board.current_turn.get_total_manhattan())
+            #print("turn", turn, halma_board.current_turn.color)
+            #print(halma_board.current_turn.get_total_manhattan())
 
         not_legal = True
         while not_legal:
@@ -315,7 +352,7 @@ def main_game_loop(halma_board):
                 if movetype == 'k':
                     move = raw_input("enter a move")
                     #move = halma_board.current_turn.decide_move(halma_board)
-                    print(move)
+                    #print(move)
                 else:
                     board_move = CHESSBOARD.move_events()
                     [(x_start, y_start),(x_end, y_end)] = board_move
@@ -336,7 +373,7 @@ def main_game_loop(halma_board):
             else:
                 not_legal = halma_board.check_not_legal(move)
                 if not not_legal:
-                    print(move)
+                    #print(move)
                     CHESSBOARD.make_move(move, halma_board.size)
                     rate(100)
 
@@ -346,28 +383,35 @@ def main_game_loop(halma_board):
         lbl.visible = 0
 
     states = 0
+    winner = ""
     for player in halma_board.players:
         states += player.results(player.player_wins())
 
-    winner = halma_board.who_won()
-    t1 = cl.time()
-    lbl = label(yoffset=50, text="Congratulations! "+str(winner)+" has won!\n"+"It took "+str(int(t1 - t0))+" seconds, over "+str(turn)+" turns.\n"+str(int(states * 100) / len(halma_board.players))+'% of the states were in the database.',color=(30/255,144/255,1), border=4,height=30,font='monospace',line=0)
+        winner = halma_board.who_won()
+        t1 = cl.time()
+    CHESSBOARD.make_invisible(halma_board)
+    win_colour = CHESSBOARD.winner_to_colour(winner)
+    lbl = label(yoffset=50, text="Congratulations! "+str(winner)+" has won!\n"+"It took "+str(int(t1 - t0))+" seconds, over "+str(turn)+" turns.\n"+str(int(states * 100) / len(halma_board.players))+'% of the states were in the database.',color=win_colour, border=4,height=30,font='monospace',line=0)
     cl.pause(lbl)
-    lbl = label(yoffset=50, text="PLAY AGAIN",color=(30/255,144/255,1), border=4,height=30,font='monospace',line=0)
-    cl.pause(lbl)
-#     print("Congratulations!,", winner, "has won!")
-#     print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
-#     print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
-#     print()
-    halma_board.reset_board()
+    lb = label(yoffset=50, text="PLAY AGAIN",color=(30/255,144/255,1), border=4,height=30,font='monospace',line=0)
+    cl.pause(lb)
+    #     print("Congratulations!,", winner, "has won!")
+    #     print("It took", str(int(t1 - t0)), "seconds, over", str(turn), "turns.")
+        #print(int(states * 100) / len(halma_board.players), '% of the states were in the database.')
+        #print()
+    CHESSBOARD.reset_board(halma_board)
+    main_game_loop(halma_board)
 
 players = 2
 boardsize = 6
 rows = 3
 playerlist = ['ab', 'ab']
+lbl = label(yoffset=50, text="START THE GAME",color=(30/255,144/255,1), border=4,height=30,font='monospace',line=0)
+cl.pause(lbl)
 halma_board = cl.Board(players, boardsize, rows, playerlist)
 CHESSBOARD = UMI_chessboard(halma_board, frameworld, board_size=boardsize)
 main_game_loop(halma_board)
+
 
 
 
